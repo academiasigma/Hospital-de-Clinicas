@@ -1,0 +1,68 @@
+body {
+    font-family: Segoe UI, Arial, sans-serif;
+    background: #f4f7fb;
+    margin: 0;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+  background: linear-gradient(180deg,#0b1e63,#14213d);
+    padding: 20px;
+    color: #fff;
+}
+
+.logo {
+    width: 180px;
+    display: block;
+  margin: 0 auto 20px
+}
+
+.sidebar a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 8px 0;
+}
+
+.sidebar a:hover{background:rgba(255,255,255,.15)}
+
+.main {
+    margin-left: 280px;
+    padding: 30px;
+}
+
+.card {
+    background: #fff;
+    border: none;
+    border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.08);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    font-size: 34px;
+    font-weight: 700;
+    color: #0b1e63;
+}
+
+.phone {
+    max-width: 360px;
+    margin: auto;
+    background: #fff;
+    border: 10px solid #222;
+    border-radius: 30px;
+  padding: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.2);
+}
+
+@media(max-width:768px){
+    .sidebar{position:relative;width:auto;height:auto}
+  .main{margin-left:0}
+}
