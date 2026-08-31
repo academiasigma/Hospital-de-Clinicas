@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Portal del Paciente</title>
+    <link rel="stylesheet" href="../css/style-portal.css">
+</head>
+<body>
+    <header class="patient-header">
+        <div class="header-inner">
+            <span class="badge-hospital">Hospital de Clínicas — Portal Público</span>
+            <h1>Portal de Invitados</h1>
+            <p>Guías e Indicaciones Médicas Digitales</p>
+        </div>
+    </header>
+
+    <main class="patient-container">
+
+        <!--Tarjeta de bienvenida y verificación 2FA con la Cédula -->
+        <section class="card verification-card">
+            <h2>Verificación de Identidad (Opcional)</h2>
+            <p>Al escanear folletos sensibles, ingrese su Cédula de Identidad para desbloquear la documentación protegida y las encuestas personalizadas.</p>
+            
+            <form id="formVerificacionCI" class="verification-form">
+                <div class="form-row">
+                    <input 
+                        type="text" 
+                        id="ciPaciente" 
+                        placeholder="Ej: 48889991" 
+                        autocomplete="off"
+                    >
+                    <button type="submit" id="btnValidarCI" class="btn-verify">Validar C.I.</button>
+                </div>
+                <div id="alertaCI" class="alerta-inline oculta"></div>
+            </form>
+            <div id="welcomeMessage" class="welcome-box oculta">
+                <span class="welcome-icon">✓</span>
+                <p>Bienvenido/a, <strong id="patientName">...</strong>. Toda la documentación reservada y encuestas de su área médica han sido desbloqueadas.</p>
+                <button id="btnSalirCI" class="btn-link-logout">Cambiar de usuario (Cerrar)</button>
+            </div>
+        </section>
+
+        <!-- Barra de búsqueda y filtro por categorías -->
+        <section class="filters-card">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="inputBuscar" 
+                    placeholder="Buscar guías médicas (ej: IVE, Preparación)..."
+                    autocomplete="off"
+                >
+            </div>
+            <div class="category-tabs" id="categoryTabs">
+                <button class="tab-btn active" data-category="0">Todos</button>
+            </div>
+        </section>
+
+        <!-- Listado de los documentos -->
+        <section class="documents-grid" id="documentsGrid">
+            <div class="loader-box">
+                <div class="spinner"></div>
+                <p>Cargando catálogo de documentos...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Popup de las encuestas de satifación -->
+    <div id="modalEncuesta" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <div class="header-title-box">
+                    <span class="survey-badge">Encuesta de Satisfacción Anónima</span>
+                    <h3 id="surveyTitle">...</h3>
+                </div>
+                <button type="button" class="btn-close" id="btnCerrarModalEncuesta">&times;</button>
+            </header>
+            
+            <form id="formEncuesta" class="survey-form">
+                <input type="hidden" id="survey_id_encuesta">
+                
+                <!-- Las preguntas se van a inyectar dinámicamente acá -->
+                <div id="surveyQuestionsContainer" class="questions-container"></div>
+                
+                <div class="form-group text-area-group">
+                    <label for="survey_observaciones">Observaciones generales (Opcional):</label>
+                    <textarea id="survey_observaciones" rows="3" placeholder="Si lo desea, déjenos un comentario detallado sobre su experiencia..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelarEncuesta">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnEnviarEncuesta">Enviar Respuestas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="patient-footer">
+        <p>Sistema Informático de Gestión de Servicios Médicos (S.I.G.S.M.)</p>
+        <p>Hospital de Clínicas Dr. Manuel Quintela | Montevideo, Uruguay</p>
+    </footer>
+
+    <script src="../js/portal-invitados.js"></script>
+</body>
+</html>

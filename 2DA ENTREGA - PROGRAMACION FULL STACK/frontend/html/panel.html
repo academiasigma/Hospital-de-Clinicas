@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Panel Principal</title>
+    <link rel="stylesheet" href="../css/style-panel.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <h2>S.I.G.S.M. | Hospital de Clínicas</h2>
+        </div>
+        <div class="user-info">
+            <span id="txtNombre">Cargando...</span>
+            <span id="txtRol" class="badge-rol">...</span>
+            <button id="btnCerrarSesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="welcome-box">
+            <h1>Bienvenido al Sistema de Gestión</h1>
+            <p>Seleccione uno de los servicios disponibles en el menú:</p>
+            
+            <div class="cards-grid">
+                <article class="card">
+                    <h3>Documentación Clínica y QR</h3>
+                    <p>Subida y gestión de directivas médicas, protocolos y generación de código QR para pacientes.</p>
+                    <a href="documentos.html" class="btn-card-action">
+                        Administrar Documentos &rarr;
+                    </a>
+                </article>
+
+                <article class="card card-locked">
+                    <h3>Gestión de Traslados (Ambulancias)</h3>
+                    <p>Planificación y despacho de traslados sanitarios no urgentes de pacientes u órganos.</p>
+                    <span class="badge-locked">Próxima Entrega (Opcional)</span>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/panel.js"></script>
+</body>
+</html>
