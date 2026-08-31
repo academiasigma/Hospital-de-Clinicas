@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Acceso</title>
+    <link rel="stylesheet" href="css/style-login.css">
+</head>
+ <body>
+    <main class="login-container">
+        <section class="login-card">
+            <header class="login-header">
+                <span class="badge-hospital">Hospital de Clínicas</span>
+                <p>Gestión de Servicios Médicos y Traslados</p>
+            </header>
+
+            <div id="alerta" class="alerta oculta" role="alert"></div>
+
+        <!-- Formulario del login para los funcionarios -->
+            <form id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="email">Correo Institucional</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="usuario@hc.edu.uy" 
+                        required 
+                        autocomplete="username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••" 
+                        required 
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <button type="submit" id="btnIngresar" class="btn-submit">
+                    Ingresar como Funcionario
+                </button>
+            </form>
+
+            <!-- Acceso directo para los pacientes -->
+            <div class="patient-access-box">
+                <p>¿Es paciente del HC o desea ver documentación informativa?</p>
+                <a href="html/portal-invitados.html" class="btn-patient">
+                    Ingresar como Paciente / Invitado
+                </a>
+            </div>
+
+            <footer class="login-footer">
+                <p>¿Necesita ayuda para ingresar? Contáctenos al correo [contacto@hc.edu.uy]</p>
+            </footer>
+        </section>
+    </main>
+
+    <script src="js/login.js"></script>
+ </body>
+</html>
