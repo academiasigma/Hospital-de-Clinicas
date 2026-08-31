@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Gestión de Documentación</title>
+    <link rel="stylesheet" href="../css/style-documentos.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <h2>S.I.G.S.M. | Gestión de Documentación</h2>
+        </div>
+        <div class="user-info">
+            <span id="txtNombre">Cargando...</span>
+            <a href="panel.html" class="btn-nav">Volver al Panel</a>
+            <button id="btnCerrarSesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="toolbar">
+            <div class="search-filters">
+                <input 
+                    type="text" 
+                    id="inputBuscar" 
+                    placeholder="Buscar por título de documento..."
+                    autocomplete="off"
+                >
+                <select id="selectFiltroCategoria">
+                    <option value="0">Todas las categorías</option>
+                </select>
+            </div>
+            <div class="toolbar-actions">
+                <button id="btnQRGeneral" class="btn-secondary">QR General del Portal</button>
+                <button id="btnAbrirModalAlta" class="btn-primary">+ Nuevo Documento</button>
+            </div>
+        </section>
+
+        <div id="alerta" class="alerta oculta" role="alert"></div>
+
+        <section class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Categoría</th>
+                            <th>Sensibilidad</th>
+                            <th>Código QR</th>
+                            <th>Archivo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo">
+                        <tr>
+                            <td colspan="7" class="text-center">Cargando documentos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!--Popup: Formulario de Alta de documento -->
+    <div id="modalAlta" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Subir Documento Clínico</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalAlta">&times;</button>
+            </header>
+
+            <form id="formAltaDocumento" novalidate>
+                <div class="form-group">
+                    <label for="titulo">Título o Asunto del Documento *</label>
+                    <input type="text" id="titulo" name="titulo" placeholder="Ej. Pauta de preparación nefrología" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_categoria">Categoría Institucional *</label>
+                    <select id="id_categoria" name="id_categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="archivo">Archivo Adjunto (PDF, PNG, JPG) *</label>
+                    <input type="file" id="archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png" required>
+                </div>
+
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="es_sensible" name="es_sensible" value="1">
+                    <label for="es_sensible">Documento de carácter sensible (Requiere validación de CI del paciente)</label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelarModalAlta">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnGuardarDocumento">Guardar Documento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--Pop up: Formulario de Edición de documento -->
+    <div id="modalEditar" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Editar Documento Clínico</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalEditar">&times;</button>
+            </header>
+
+            <form id="formEditarDocumento" novalidate>
+                <input type="hidden" id="edit_id_documento" name="id_documento">
+
+                <div class="form-group">
+                    <label for="edit_titulo">Título o Asunto *</label>
+                    <input type="text" id="edit_titulo" name="titulo" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_id_categoria">Categoría Institucional *</label>
+                    <select id="edit_id_categoria" name="id_categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_archivo">Reemplazar Archivo (Opcional - Dejar vacío para conservar el actual)</label>
+                    <input type="file" id="edit_archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="edit_es_sensible" name="es_sensible" value="1">
+                    <label for="edit_es_sensible">Documento confidencial (Requiere validación de CI del paciente)</label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelarModalEditar">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnActualizarDocumento">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pop up: Visualizador de código QR -->
+    <div id="modalQR" class="modal oculta">
+        <div class="modal-content modal-qr-content">
+            <header class="modal-header">
+                <h3 id="qrModalTitulo">Código QR</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalQR">&times;</button>
+            </header>
+            <div class="qr-body">
+                <div id="qrImagenContainer"></div>
+                <p id="qrModalCodigo" class="qr-token"></p>
+                <small id="qrModalSub">Escanee este código con su dispositivo móvil para acceder al portal.</small>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/documentos.js"></script>
+</body>
+</html>
