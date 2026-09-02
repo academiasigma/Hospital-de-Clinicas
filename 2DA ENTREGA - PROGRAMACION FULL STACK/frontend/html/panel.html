@@ -5,11 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S.I.G.S.M. - Panel Principal</title>
     <link rel="stylesheet" href="../css/style-panel.css">
+    <style>
+        /* Ajuste responsivo para mostrar 3 tarjetas si es administrador */
+        @media (min-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <header class="navbar">
         <div class="brand">
-            <h2>S.I.G.S.M. | Hospital de Clínicas</h2>
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="header-logo">
         </div>
         <div class="user-info">
             <span id="txtNombre">Cargando...</span>
@@ -25,22 +33,45 @@
             
             <div class="cards-grid">
                 <article class="card">
+                    <div class="card-icon-container">
+                        <img src="../img/card-documentos.svg" class="card-icon" alt="Documentación">
+                    </div>
                     <h3>Documentación Clínica y QR</h3>
-                    <p>Subida y gestión de directivas médicas, protocolos y generación de código QR para pacientes.</p>
+                    <p>Subida y gestión de directivas médicas, protocolos y generación de códigos QR para pacientes.</p>
                     <a href="documentos.html" class="btn-card-action">
                         Administrar Documentos &rarr;
                     </a>
                 </article>
 
-                <article class="card card-locked">
-                    <h3>Gestión de Traslados (Ambulancias)</h3>
-                    <p>Planificación y despacho de traslados sanitarios no urgentes de pacientes u órganos.</p>
-                    <span class="badge-locked">Próxima Entrega (Opcional)</span>
+                <article class="card card-users" id="cardUsuarios" style="display: none;">
+                    <div class="card-icon-container">
+                        <img src="../img/card-usuarios.svg" class="card-icon" alt="Funcionarios">
+                    </div>
+                    <h3>Gestión de Funcionarios</h3>
+                    <p>Control de acceso, alta, baja y asignación de roles de seguridad para el personal del hospital.</p>
+                    <a href="usuarios.html" class="btn-card-action">
+                        Administrar Personal &rarr;
+                    </a>
+                </article>
+
+                <article class="card">
+                    <div class="card-icon-container">
+                        <img src="../img/card-traslados.svg" class="card-icon" alt="Traslados">
+                    </div>
+                    <h3>Gestión de Traslados</h3>
+                    <p>Planificación, despacho y simulación interactiva de traslados sanitarios no urgentes de pacientes u órganos.</p>
+                    <a href="ambulancias.html" class="btn-card-action">
+                        Administrar Traslados &rarr;
+                    </a>
                 </article>
             </div>
         </section>
     </main>
 
+    <script src="../js/auth.js"></script>
     <script src="../js/panel.js"></script>
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
 </body>
 </html>

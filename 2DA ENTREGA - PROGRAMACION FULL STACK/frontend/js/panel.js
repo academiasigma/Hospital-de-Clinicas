@@ -1,35 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const txtNombre = document.querySelector('#txtNombre');
-    const txtRol = document.querySelector('#txtRol');
-    const btnCerrarSesion = document.querySelector('#btnCerrarSesion');
+    const user = await window.authPromise;
+    if (!user) return;
 
-    try {
-        const res = await fetch('../../api/sesion.php', {
-            method: 'GET'
-        });
+    const cardUsuarios = document.querySelector('#cardUsuarios');
 
-        const datos = await res.json();
-
-        if (!res.ok || !datos.autenticado) {
-            window.location.href = '../index.html';
-            return;
+    // Muestra el módulo de gestión de usuarios únicamente al Administrador (SUPERADMIN_IT)
+    if (user.rol === 'SUPERADMIN_IT') {
+        if (cardUsuarios) {
+            cardUsuarios.style.display = 'flex';
         }
-
-        txtNombre.textContent = datos.usuario.nombre;
-        txtRol.textContent = datos.usuario.rol;
-
-    } catch (error) {
-        window.location.href = '../index.html';
     }
-
-    btnCerrarSesion.addEventListener('click', async () => {
-        try {
-            await fetch('../../api/logout.php', {
-                method: 'POST'
-            });
-            window.location.href = '../index.html';
-        } catch (err) {
-            alert('Error al cerrar sesión.');
-        }
-    });
 });
