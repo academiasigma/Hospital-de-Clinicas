@@ -1,4 +1,5 @@
 <?php
+
 class Database {
     private string $host = 'localhost';
     private string $db_name = 'sigsm_db';
@@ -6,7 +7,9 @@ class Database {
     private string $password = '';
     private ?PDO $conexion = null;
 
-    // Obtiene y retorna la instancia activa de la conexión PDO.
+    
+     // Obtiene y retorna la instancia activa de la conexión PDO.
+     
     public function conectar(): ?PDO {
         $this->conexion = null;
 
