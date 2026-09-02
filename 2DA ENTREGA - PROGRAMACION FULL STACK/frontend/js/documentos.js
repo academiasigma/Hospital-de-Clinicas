@@ -40,21 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => cajaAlerta.classList.add('oculta'), 5000);
     };
 
-    const verificarSesion = async () => {
-        try {
-            const res = await fetch('../../api/sesion.php', { method: 'GET' });
-            const data = await res.json();
-
-            if (!res.ok || !data.autenticado) {
-                window.location.href = '../index.html';
-                return;
-            }
-
-            txtNombre.textContent = `${data.usuario.nombre} (${data.usuario.rol})`;
-        } catch (error) {
-            window.location.href = '../index.html';
-        }
-    };
+    
 
     const cargarCategorias = async () => {
         try {
@@ -101,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (docsFiltrados.length === 0) {
             tablaCuerpo.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center">No se encontraron documentos con los criterios ingresados.</td>
+                    <td colspan="5" class="text-center">No se encontraron documentos con los criterios ingresados.</td>
                 </tr>
             `;
             return;
@@ -110,37 +96,21 @@ document.addEventListener('DOMContentLoaded', () => {
         docsFiltrados.forEach((doc) => {
             const tr = document.createElement('tr');
 
-            const badgeSensible = parseInt(doc.es_sensible, 10) === 1
-                ? `<span class="badge badge-sensible">Sensible (CI)</span>`
-                : `<span class="badge badge-publico">Público</span>`;
+            
 
             tr.innerHTML = `
                 <td>#${doc.id_documento}</td>
-`
-                `                <td><strong>${doc.titulo}</strong></td>
-`
-                `                <td>${doc.categoria_nombre}</td>
-`
-                `                <td>${badgeSensible}</td>
-`
-                `                <td><code>${doc.codigo_qr}</code></td>
-`
-                `                <td>
-`
-                `                    <a href="../../${doc.archivo}" target="_blank" class="btn-action">Ver Archivo</a>
-`
-                `                </td>
-`
-                `                <td>
-`
-                `                    <button class="btn-action btn-ver-qr" data-qr="${doc.codigo_qr}" data-titulo="${doc.titulo}">Ver QR</button>
-`
-                `                    <button class="btn-action btn-edit" data-id="${doc.id_documento}">Editar</button>
-`
-                `                    <button class="btn-action btn-delete" data-id="${doc.id_documento}">Eliminar</button>
-`
-                `                </td>
-`;
+                <td><strong>${doc.titulo}</strong></td>
+                <td>${doc.categoria_nombre}</td>
+                
+                <td>
+                    <a href="../../${doc.archivo}" target="_blank" class="btn-action">Ver Archivo</a>
+                </td>
+                <td>
+                    <button class="btn-action btn-edit" data-id="${doc.id_documento}">Editar</button>
+                    <button class="btn-action btn-delete" data-id="${doc.id_documento}">Eliminar</button>
+                </td>
+            `;
 
             tablaCuerpo.appendChild(tr);
         });
@@ -159,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             mostrarAlerta(error.message, 'error');
-            tablaCuerpo.innerHTML = `<tr><td colspan="7" class="text-center">Error al cargar datos.</td></tr>`;
+            tablaCuerpo.innerHTML = `<tr><td colspan="5" class="text-center">Error al cargar datos.</td></tr>`;
         }
     };
 
@@ -282,55 +252,29 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('#edit_id_documento').value = doc.id_documento;
             document.querySelector('#edit_titulo').value = doc.titulo;
             document.querySelector('#edit_id_categoria').value = doc.id_categoria;
-            document.querySelector('#edit_es_sensible').checked = parseInt(doc.es_sensible, 10) === 1;
+            
             document.querySelector('#edit_archivo').value = '';
 
             modalEditar.classList.remove('oculta');
         }
 
-        if (e.target.classList.contains('btn-ver-qr')) {
-            const qrToken = e.target.dataset.qr;
-            const docTitulo = e.target.dataset.titulo;
 
-            qrModalTitulo.textContent = docTitulo;
-            qrModalCodigo.textContent = qrToken;
-            qrModalSub.textContent = 'Escanee este código con su móvil para simular que un paciente accede a este documento.';
-
-            const urlPortalConToken = `${window.location.origin}/sigsm/frontend/html/portal-invitados.html?qr=${encodeURIComponent(qrToken)}`;
-
-            qrImagenContainer.innerHTML = `
-                <a href="${urlPortalConToken}" target="_blank" title="Abrir simulación de escaneo">
-                    <img 
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlPortalConToken)}" 
-                        alt="Código QR" 
-                        style="border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px;"
-                    >
-                </a>
-                <div style="margin-top: 0.5rem;">
-                    <a href="${urlPortalConToken}" target="_blank" style="font-size:0.8rem; color:#006699; font-weight:600; text-decoration:none;">
-                        Simular escaneo de paciente &rarr;
-                    </a>
-                </div>
-            `;
-
-            modalQR.classList.remove('oculta');
-        }
     });
 
-    // Evento del QR General para todo el Portal de Pacientes
+    // Evento del QR general para todo el Portal de Pacientes
     btnQRGeneral.addEventListener('click', () => {
         qrModalTitulo.textContent = "QR General del Hospital de Clínicas";
-        qrModalCodigo.textContent = "PORTAL_INVITADOS";
-        qrModalSub.textContent = "Este QR redirige a los pacientes al Portal de Invitados del SIGSM.";
+        // qrModalCodigo.textContent = "PORTAL_INVITADOS";
+        qrModalSub.textContent = "Este QR único redirige a los pacientes al Portal de Invitados de SIGSM.";
 
         const urlPortalGeneral = `${window.location.origin}/sigsm/frontend/html/portal-invitados.html`;
 
         qrImagenContainer.innerHTML = `
             <a href="${urlPortalGeneral}" target="_blank" title="Abrir portal de pacientes">
                 <img 
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlPortalGeneral)}" 
+                    src="../img/qr.png" 
                     alt="Código QR General" 
-                    style="border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px;"
+                    style="border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; max-width: 180px;"
                 >
             </a>
             <div style="margin-top: 0.5rem;">
@@ -355,16 +299,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCerrarModalQR.addEventListener('click', () => modalQR.classList.add('oculta'));
 
-    btnCerrarSesion.addEventListener('click', async () => {
-        try {
-            await fetch('../../api/logout.php', { method: 'POST' });
-            window.location.href = '../index.html';
-        } catch (error) {
-            alert('Error al cerrar sesión.');
+    window.authPromise.then((user) => {
+        if (user) {
+            cargarCategorias();
+            obtenerDocumentos();
         }
     });
-
-    verificarSesion();
-    cargarCategorias();
-    obtenerDocumentos();
 });

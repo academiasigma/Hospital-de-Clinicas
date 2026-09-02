@@ -9,7 +9,7 @@
 <body>
     <header class="navbar">
         <div class="brand">
-            <h2>S.I.G.S.M. | Gestión de Documentación</h2>
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="header-logo">
         </div>
         <div class="user-info">
             <span id="txtNombre">Cargando...</span>
@@ -47,15 +47,14 @@
                             <th>ID</th>
                             <th>Título</th>
                             <th>Categoría</th>
-                            <th>Sensibilidad</th>
-                            <th>Código QR</th>
+                            
                             <th>Archivo</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCuerpo">
                         <tr>
-                            <td colspan="7" class="text-center">Cargando documentos...</td>
+                            <td colspan="5" class="text-center">Cargando documentos...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -63,7 +62,7 @@
         </section>
     </main>
 
-    <!--Popup: Formulario de Alta de documento -->
+    <!-- Modal: Formulario de Alta de Documento -->
     <div id="modalAlta" class="modal oculta">
         <div class="modal-content">
             <header class="modal-header">
@@ -89,10 +88,7 @@
                     <input type="file" id="archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
-                <div class="form-group-checkbox">
-                    <input type="checkbox" id="es_sensible" name="es_sensible" value="1">
-                    <label for="es_sensible">Documento de carácter sensible (Requiere validación de CI del paciente)</label>
-                </div>
+                
 
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="btnCancelarModalAlta">Cancelar</button>
@@ -102,7 +98,7 @@
         </div>
     </div>
 
-    <!--Pop up: Formulario de Edición de documento -->
+    <!-- Modal: Formulario de Edición del Documento -->
     <div id="modalEditar" class="modal oculta">
         <div class="modal-content">
             <header class="modal-header">
@@ -130,10 +126,7 @@
                     <input type="file" id="edit_archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png">
                 </div>
 
-                <div class="form-group-checkbox">
-                    <input type="checkbox" id="edit_es_sensible" name="es_sensible" value="1">
-                    <label for="edit_es_sensible">Documento confidencial (Requiere validación de CI del paciente)</label>
-                </div>
+                
 
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="btnCancelarModalEditar">Cancelar</button>
@@ -143,21 +136,24 @@
         </div>
     </div>
 
-    <!-- Pop up: Visualizador de código QR -->
+    <!-- Modal: Visualizador del Código QR -->
     <div id="modalQR" class="modal oculta">
         <div class="modal-content modal-qr-content">
             <header class="modal-header">
                 <h3 id="qrModalTitulo">Código QR</h3>
                 <button type="button" class="btn-close" id="btnCerrarModalQR">&times;</button>
-            </header>
-            <div class="qr-body">
-                <div id="qrImagenContainer"></div>
-                <p id="qrModalCodigo" class="qr-token"></p>
+             </header>
+        <div class="qr-body">
+            <div id="qrImagenContainer"></div>
                 <small id="qrModalSub">Escanee este código con su dispositivo móvil para acceder al portal.</small>
             </div>
         </div>
     </div>
 
+    <script src="../js/auth.js"></script>
     <script src="../js/documentos.js"></script>
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
 </body>
 </html>

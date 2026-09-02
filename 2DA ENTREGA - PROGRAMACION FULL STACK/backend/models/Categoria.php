@@ -12,7 +12,7 @@ class Categoria {
     }
 
     
-     //Retorna el listado completo de las categorías disponibles.
+    // Retorna el listado completo de las categorías disponibles.
     public function listar(): array {
         $sql = "SELECT id_categoria, nombre FROM {$this->tabla} ORDER BY nombre ASC";
         $stmt = $this->conexion->prepare($sql);

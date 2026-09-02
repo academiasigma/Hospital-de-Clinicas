@@ -1,4 +1,5 @@
 <?php
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
@@ -21,7 +22,7 @@ if (!Auth::verificarAutenticacion()) {
 $id_documento = isset($_POST['id_documento']) ? (int)$_POST['id_documento'] : 0;
 $titulo = trim($_POST['titulo'] ?? '');
 $id_categoria = isset($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : 0;
-$es_sensible = isset($_POST['es_sensible']) ? (int)$_POST['es_sensible'] : 0;
+
 
 if ($id_documento <= 0 || empty($titulo) || $id_categoria <= 0) {
     http_response_code(400);
@@ -33,7 +34,7 @@ $modelo = new Documento();
 $datosActualizar = [
     'titulo'       => $titulo,
     'id_categoria' => $id_categoria,
-    'es_sensible'  => $es_sensible,
+    
     'archivo'      => null
 ];
 

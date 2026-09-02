@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../config/Database.php';
 
 class Documento {
@@ -8,8 +9,7 @@ class Documento {
     public ?int $id_documento = null;
     public ?string $titulo = null;
     public ?string $archivo = null;
-    public ?string $codigo_qr = null;
-    public int $es_sensible = 0;
+    
     public ?int $id_usuario = null;
     public ?int $id_categoria = null;
 
@@ -18,15 +18,13 @@ class Documento {
         $this->conexion = $db->conectar();
     }
 
-     //Obtiene todos los documentos vinculando nombre de categoría y autor.
-    
+     //Obtiene todos los documentos vinculando nombre de categoría y autor
     public function listarTodos(?int $idCategoria = null): array {
         $sql = "SELECT 
                     d.id_documento,
                     d.titulo,
                     d.archivo,
-                    d.codigo_qr,
-                    d.es_sensible,
+                    
                     d.id_categoria,
                     c.nombre AS categoria_nombre,
                     u.nombre AS autor_nombre
@@ -49,16 +47,14 @@ class Documento {
         return $stmt->fetchAll();
     }
 
-     //Obtiene todos los documentos públicos (o que no requieran validación de C.I. directa).
-     //Y los filtrados por C.I. (en el endpoint se procesa).
     
+    // Obtiene todos los documentos para  la visualización en el portal de pacientes
     public function listarPublicos(): array {
         $sql = "SELECT 
                     d.id_documento,
                     d.titulo,
                     d.archivo,
-                    d.codigo_qr,
-                    d.es_sensible,
+                    
                     d.id_categoria,
                     c.nombre AS categoria_nombre
                 FROM {$this->tabla} d
@@ -69,14 +65,14 @@ class Documento {
         return $stmt->fetchAll();
     }
 
-     //Obtiene un documento específico por su ID único.
+    
+     // Obtiene un documento específico por su id único
     public function obtenerPorId(int $id): ?array {
         $sql = "SELECT 
                     d.id_documento,
                     d.titulo,
                     d.archivo,
-                    d.codigo_qr,
-                    d.es_sensible,
+                    
                     d.id_categoria,
                     c.nombre AS categoria_nombre,
                     d.id_usuario
@@ -94,27 +90,26 @@ class Documento {
     }
 
     
-     //Registra un nuevo documento clínico en la base de datos.
-    
+    //Registra un nuevo documento clínico en la base de datos
     public function crear(array $datos): bool {
         $sql = "INSERT INTO {$this->tabla} 
- (titulo, archivo, codigo_qr, es_sensible, id_usuario, id_categoria) 
+ (titulo, archivo, id_usuario, id_categoria) 
  VALUES 
- (:titulo, :archivo, :codigo_qr, :es_sensible, :id_usuario, :id_categoria)";
+ (:titulo, :archivo, :id_usuario, :id_categoria)";
 
         $stmt = $this->conexion->prepare($sql);
 
         $stmt->bindParam(':titulo', $datos['titulo'], PDO::PARAM_STR);
         $stmt->bindParam(':archivo', $datos['archivo'], PDO::PARAM_STR);
-        $stmt->bindParam(':codigo_qr', $datos['codigo_qr'], PDO::PARAM_STR);
-        $stmt->bindParam(':es_sensible', $datos['es_sensible'], PDO::PARAM_INT);
+        
         $stmt->bindParam(':id_usuario', $datos['id_usuario'], PDO::PARAM_INT);
         $stmt->bindParam(':id_categoria', $datos['id_categoria'], PDO::PARAM_INT);
 
         return $stmt->execute();
     }
 
-     //Actualiza los metadatos y opcionalmente el archivo de un documento existente.
+    
+     //Actualiza los metadatos y opcionalmente el archivo de un documento existente
     public function actualizar(int $id, array $datos): bool {
         $docActual = $this->obtenerPorId($id);
         if (!$docActual) {
@@ -124,8 +119,7 @@ class Documento {
         $actualizarArchivo = !empty($datos['archivo']);
         $sql = "UPDATE {$this->tabla} 
  SET titulo = :titulo, 
-     id_categoria = :id_categoria, 
-     es_sensible = :es_sensible";
+     id_categoria = :id_categoria";
 
         if ($actualizarArchivo) {
             $sql .= ", archivo = :archivo";
@@ -136,7 +130,7 @@ class Documento {
         $stmt = $this->conexion->prepare($sql);
         $stmt->bindParam(':titulo', $datos['titulo'], PDO::PARAM_STR);
         $stmt->bindParam(':id_categoria', $datos['id_categoria'], PDO::PARAM_INT);
-        $stmt->bindParam(':es_sensible', $datos['es_sensible'], PDO::PARAM_INT);
+        
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
         if ($actualizarArchivo) {
@@ -145,7 +139,7 @@ class Documento {
 
         $ejecutado = $stmt->execute();
 
-        // Limpieza del archivo anterior si el UPDATE fue exitoso
+        // Limpieza física del archivo anterior si el update fue exitoso
         if ($ejecutado && $actualizarArchivo && !empty($docActual['archivo'])) {
             $rutaAnterior = __DIR__ . '/../../' . ltrim($docActual['archivo'], '/');
             if (file_exists($rutaAnterior)) {
@@ -156,9 +150,7 @@ class Documento {
         return $ejecutado;
     }
 
-
-    //Elimina el registro del documento.
-
+    // Elimina el registro del documento
     public function eliminar(int $id): bool {
         $doc = $this->obtenerPorId($id);
         if (!$doc) {
@@ -171,7 +163,7 @@ class Documento {
         
         $eliminado = $stmt->execute();
 
-        //Si se eliminó de la BD, borra el archivo físico del servidor
+        // Si se eliminó de la BD, borrar el archivo físico del servidor
         if ($eliminado && !empty($doc['archivo'])) {
             $rutaFisica = __DIR__ . '/../../' . ltrim($doc['archivo'], '/');
             if (file_exists($rutaFisica)) {

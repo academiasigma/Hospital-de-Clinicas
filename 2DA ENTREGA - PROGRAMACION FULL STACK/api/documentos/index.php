@@ -1,4 +1,5 @@
 <?php
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
@@ -34,7 +35,7 @@ if ($metodo === 'POST') {
 
     $titulo = trim($_POST['titulo'] ?? '');
     $id_categoria = isset($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : 0;
-    $es_sensible = isset($_POST['es_sensible']) ? (int)$_POST['es_sensible'] : 0;
+    
     $id_usuario = (int)$_SESSION['usuario']['id_usuario'];
 
     if (empty($titulo) || $id_categoria <= 0) {
@@ -75,13 +76,10 @@ if ($metodo === 'POST') {
         exit;
     }
 
-    $codigoQR = 'QR_HC_' . strtoupper(bin2hex(random_bytes(8)));
-
-    $exito = $modelo->crear([
+        $exito = $modelo->crear([
         'titulo'       => $titulo,
         'archivo'      => $rutaBD,
-        'codigo_qr'    => $codigoQR,
-        'es_sensible'  => $es_sensible,
+        
         'id_usuario'   => $id_usuario,
         'id_categoria' => $id_categoria
     ]);
@@ -97,8 +95,7 @@ if ($metodo === 'POST') {
     echo json_encode([
         'status'    => 'ok',
         'mensaje'   => 'Documento registrado exitosamente.',
-        'codigo_qr' => $codigoQR
-    ]);
+]);
     exit;
 }
 
