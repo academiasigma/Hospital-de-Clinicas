@@ -1,18 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Selectores
-    const formVerificacionCI = document.querySelector('#formVerificacionCI');
-    const ciPaciente = document.querySelector('#ciPaciente');
-    const alertaCI = document.querySelector('#alertaCI');
-    const btnValidarCI = document.querySelector('#btnValidarCI');
-    const welcomeMessage = document.querySelector('#welcomeMessage');
-    const patientName = document.querySelector('#patientName');
-    const btnSalirCI = document.querySelector('#btnSalirCI');
-
     const inputBuscar = document.querySelector('#inputBuscar');
     const categoryTabs = document.querySelector('#categoryTabs');
     const documentsGrid = document.querySelector('#documentsGrid');
 
-    // Selectores del modal de las encuestas
+    // Selectores del modal de encuestas
     const modalEncuesta = document.querySelector('#modalEncuesta');
     const btnCerrarModalEncuesta = document.querySelector('#btnCerrarModalEncuesta');
     const btnCancelarEncuesta = document.querySelector('#btnCancelarEncuesta');
@@ -23,28 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const surveyObservaciones = document.querySelector('#survey_observaciones');
     const btnEnviarEncuesta = document.querySelector('#btnEnviarEncuesta');
 
-    // Estado local
+    //Estado local
     let documentosList = [];
     let categoriasList = [];
     let activeCategory = 0;
-    let ciActual = '';
-
-    // Cargar los parámetros de URL 
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenQR = urlParams.get('qr');
-
-    const mostrarAlertaCI = (mensaje) => {
-        alertaCI.textContent = mensaje;
-        alertaCI.classList.remove('oculta');
-    };
-
-    const ocultarAlertaCI = () => {
-        alertaCI.textContent = '';
-        alertaCI.classList.add('oculta');
-    };
 
     //Cargar documentos del portal público
-    const cargarPortal = async (ci = '') => {
+    const cargarPortal = async () => {
         documentsGrid.innerHTML = `
             <div class="loader-box">
                 <div class="spinner"></div>
@@ -53,12 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         try {
-            let url = '../../api/documentos/publicos.php';
-            if (ci) {
-                url += `?ci=${encodeURIComponent(ci)}`;
-            }
-
-            const res = await fetch(url, { method: 'GET' });
+            // El endpoint api/documentos/publicos.php retorna todos los documentos de acceso libre
+            const res = await fetch('../../api/documentos/publicos.php', { method: 'GET' });
             const data = await res.json();
 
             if (!res.ok) {
@@ -66,25 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             documentosList = data.documentos;
-
-            // Si la cédula fue validada con éxito
-            if (data.pacienteValido) {
-                ciActual = ci;
-                patientName.textContent = data.nombrePaciente;
-                formVerificacionCI.classList.add('oculta');
-                welcomeMessage.classList.remove('oculta');
-            } else {
-                ciActual = '';
-                formVerificacionCI.classList.remove('oculta');
-                welcomeMessage.classList.add('oculta');
-            }
-
             renderizarDocumentos();
-
-            if (tokenQR && documentsGrid.querySelector(`.doc-card[data-qr="${tokenQR}"]`)) {
-                inputBuscar.value = tokenQR;
-                renderizarDocumentos();
-            }
 
         } catch (error) {
             documentsGrid.innerHTML = `
@@ -95,12 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    //Renderizar los documentos con filtros
+    // 2. Renderizar los documentos con filtros en el cliente 
     const renderizarDocumentos = () => {
         const busqueda = inputBuscar.value.toLowerCase().trim();
 
         const docsFiltrados = documentosList.filter((doc) => {
-            const coincideBusqueda = doc.titulo.toLowerCase().includes(busqueda) || doc.codigo_qr.toLowerCase() === busqueda;
+            const coincideBusqueda = doc.titulo.toLowerCase().includes(busqueda);
             const coincideCategoria = activeCategory === 0 || doc.id_categoria === activeCategory;
             return coincideBusqueda && coincideCategoria;
         });
@@ -119,31 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
         docsFiltrados.forEach((doc) => {
             const docCard = document.createElement('article');
             docCard.className = 'doc-card';
-            docCard.dataset.qr = doc.codigo_qr;
 
-            const badgeSensible = doc.es_sensible 
-                ? '<span class="doc-badge-sensible">RESERVADO</span>' 
-                : '<span class="doc-badge-publico">PÚBLICO</span>';
+            
 
-            let actionButton = '';
-            if (doc.bloqueado) {
-                actionButton = `
-                    <button class="btn-doc-locked btn-unlock-trigger" data-qr="${doc.codigo_qr}">
-                        🔒 Desbloquear con C.I.
-                    </button>
-                `;
-            } else {
-                actionButton = `
-                    <a href="../../${doc.archivo}" target="_blank" class="btn-doc-download">
-                        📄 Ver / Descargar (PDF)
-                    </a>
-                `;
-            }
+            // Todos los documentos desbloqueados de acceso libre
+            const actionButton = `
+                <a href="../../${doc.archivo}" target="_blank" class="btn-doc-download">
+                    📄 Ver / Descargar (PDF)
+                </a>
+            `;
 
             docCard.innerHTML = `
                 <div class="doc-info-top">
                     <span class="doc-badge-cat">${doc.categoria_nombre}</span>
-                    ${badgeSensible}
+                    
                 </div>
                 <h3>${doc.titulo}</h3>
                 <div class="doc-card-actions">
@@ -158,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    //Cargar las categorías para las pestañas de filtro (Tabs)
+    //Cargar las categorías para las pestañas de filtro
     const cargarFiltrosCategorias = async () => {
         try {
             const res = await fetch('../../api/categorias/index.php', { method: 'GET' });
@@ -171,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tabBtn = document.createElement('button');
                     tabBtn.className = 'tab-btn';
                     tabBtn.dataset.category = cat.id_categoria;
-                    tabBtn.textContent = cat.nombre.split(' y ')[0]; // Nombre corto para celular
+                    tabBtn.textContent = cat.nombre.split(' y ')[0]; //Nombre corto para celular
                     categoryTabs.appendChild(tabBtn);
                 });
             }
@@ -180,37 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    //Formulario de la verificación de C.I (2FA)
-    formVerificacionCI.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        ocultarAlertaCI();
-
-        const ci = ciPaciente.value.trim();
-        if (!ci) {
-            mostrarAlertaCI('Por favor ingrese su número de cédula.');
-            return;
-        }
-
-        btnValidarCI.disabled = true;
-        btnValidarCI.textContent = 'Validando...';
-
-        try {
-            await cargarPortal(ci);
-        } catch (err) {
-            mostrarAlertaCI(err.message);
-        } finally {
-            btnValidarCI.disabled = false;
-            btnValidarCI.textContent = 'Validar C.I.';
-        }
-    });
-
-    btnSalirCI.addEventListener('click', () => {
-        ciPaciente.value = '';
-        ocultarAlertaCI();
-        cargarPortal('');
-    });
-
-    //Filtros por categorías (Tabs click)
+    //Filtros por categorías
     categoryTabs.addEventListener('click', (e) => {
         if (e.target.classList.contains('tab-btn')) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -220,29 +134,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    //Buscador 
+    // Buscador interactivo
     inputBuscar.addEventListener('input', renderizarDocumentos);
 
-    //Derivación de los clics en desbloqueo con C.I. individual
-    documentsGrid.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-unlock-trigger')) {
-            ciPaciente.focus();
-            mostrarAlertaCI('Por favor, ingrese su Cédula de Identidad en la parte superior para desbloquear esta guía reservada.');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    });
-
-
-    // 8. LOGICA DE ENCUESTAS DE SATISFACCION DINÁMICAS
+    // LOGICA DE ENCUESTAS DE SATISFACCION DINÁMICAS
     
-    // objeto para almacenar respuestas temporales de botones de escala
+    // Objeto para almacenar las respuestas temporales de los botones de escala
     let respuestasEscala = {};
 
     const abrirEncuesta = async (idCategoria, catNombre) => {
         surveyQuestionsContainer.innerHTML = '<p class="text-center">Cargando preguntas de satisfacción...</p>';
         formEncuesta.classList.add('oculta');
         modalEncuesta.classList.remove('oculta');
-        respuestasEscala = {}; // Resetear la escala
+        respuestasEscala = {}; //resetear escala
 
         try {
             const res = await fetch(`../../api/encuestas/index.php?id_categoria=${idCategoria}`);
@@ -268,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('#btnEnviarEncuesta').classList.remove('oculta');
             surveyQuestionsContainer.innerHTML = '';
 
-            // Renderizar cada pregunta según su tipo
+            // Renderizar cada pregunta dinámicamente según su tipo
             data.encuesta.preguntas.forEach((pregunta, index) => {
                 const block = document.createElement('div');
                 block.className = 'question-block';
@@ -293,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                 } else if (pregunta.tipo === 'Escala_1_5') {
-                    // Contenedor de escala
+                    // Contenedor de la escala
                     const scaleRow = document.createElement('div');
                     scaleRow.className = 'scale-options-row';
                     scaleRow.innerHTML = `
@@ -328,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Manejar clics en el botón de encuestas
+    // Manejar los clicks en el botón de encuestas
     documentsGrid.addEventListener('click', (e) => {
         if (e.target.classList.contains('btn-survey-trigger')) {
             const idCat = e.target.dataset.categoria;
@@ -337,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Escuchar la selección de los botones de Escala 1-5 (Delegación de eventos)
+    // Escuchar selección de botones de la Escala 1-5 (Delegación de eventos)
     surveyQuestionsContainer.addEventListener('click', (e) => {
         if (e.target.classList.contains('scale-item-btn')) {
             const btn = e.target;
@@ -345,18 +249,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const idPregunta = container.dataset.pregunta;
             const val = btn.dataset.val;
 
-            // Deseleccionar otros botones en el mismo contenedor
+            //Deseleccionar otros botones en el mismo contenedor
             container.querySelectorAll('.scale-item-btn').forEach(b => b.classList.remove('selected'));
             
-            // Seleccionar el actual
+            //Seleccionar el actual
             btn.classList.add('selected');
             
-            // Guardar el valor en el estado temporal
+            //Guardar valor en el estado temporal
             respuestasEscala[idPregunta] = val;
         }
     });
 
-    // Enviar la encuesta
+    // Enviar encuesta
     formEncuesta.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -364,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const observaciones = surveyObservaciones.value.trim();
         const respuestas = [];
 
-        // Validar y recopilar respuestas de las preguntas dinámicas
+        // Validar y recopilar las respuestas de las preguntas dinámicas
         const bloques = surveyQuestionsContainer.querySelectorAll('.question-block');
         let errorValidacion = false;
 
@@ -398,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (errorValidacion) {
-            alert('Por favor responda todas las preguntas con una opción o calificación antes de enviarla.');
+            alert('Por favor responda todas las preguntas con opción o calificación antes de enviar.');
             return;
         }
 
@@ -434,11 +338,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Control del cierre del modal de encuestas
+    // Control de cierre del modal de encuestas
     btnCerrarModalEncuesta.addEventListener('click', () => modalEncuesta.classList.add('oculta'));
     btnCancelarEncuesta.addEventListener('click', () => modalEncuesta.classList.add('oculta'));
 
     // Inicialización del portal
     cargarFiltrosCategorias();
-    cargarPortal('');
+    cargarPortal();
 });

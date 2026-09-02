@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../config/Database.php';
 
 class Encuesta {
@@ -10,8 +11,7 @@ class Encuesta {
         $this->conexion = $db->conectar();
     }
 
-     //Obtiene la encuesta activa de una categoría específica, junto con sus preguntas y opciones.
-     
+    //Obtiene la encuesta activa de una categoría específica, con sus preguntas y opciones. 
     public function obtenerActivaPorCategoria(int $id_categoria): ?array {
         $sql = "SELECT id_encuesta, comentarios, id_categoria 
                 FROM {$this->tabla} 
@@ -60,14 +60,13 @@ class Encuesta {
         return $encuesta;
     }
 
-    /**
-     * Guarda de forma anónima y transaccional una resolución de encuesta con sus respectivas respuestas.
-     */
+    
+     // Guarda de forma anónima y transaccional una resolución de encuesta con sus respectivas respuestas.
     public function guardarResolucion(int $id_encuesta, string $observaciones, array $respuestas): bool {
         try {
             $this->conexion->beginTransaction();
 
-            // 1. Insertar resolución
+            //insertar resolución
             $sqlResolucion = "INSERT INTO resolucion_encuesta (id_encuesta, observaciones) 
  VALUES (:id_encuesta, :observaciones)";
             $stmtRes = $this->conexion->prepare($sqlResolucion);
@@ -77,7 +76,7 @@ class Encuesta {
 
             $id_resolucion = (int)$this->conexion->lastInsertId();
 
-            // 2. Insertar cada respuesta
+            //insertar cada respuesta
             $sqlRespuesta = "INSERT INTO respuesta (contenido_respuesta, id_resolucion, id_pregunta) 
  VALUES (:contenido, :id_resolucion, :id_pregunta)";
             $stmtResp = $this->conexion->prepare($sqlRespuesta);
@@ -86,7 +85,7 @@ class Encuesta {
                 $id_pregunta = (int)$resp['id_pregunta'];
                 $contenido = trim($resp['contenido_respuesta'] ?? '');
 
-                // Saltamos respuestas vacías si el usuario no contestó
+                // Saltamos las respuestas vacías si el usuario no contestó
                 if ($contenido === '') {
                     continue;
                 }

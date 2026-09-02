@@ -1,5 +1,5 @@
 <?php
-// api/encuestas/index.php
+
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -11,9 +11,8 @@ require_once __DIR__ . '/../../backend/models/Encuesta.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 $modelo = new Encuesta();
 
-// -------------------------------------------------------------
-// GET: Obtener encuesta activa para una categoría
-// -------------------------------------------------------------
+//GET: Obtener encuesta activa para una categoría
+
 if ($metodo === 'GET') {
     $id_categoria = isset($_GET['id_categoria']) ? (int)$_GET['id_categoria'] : 0;
 
@@ -35,10 +34,8 @@ if ($metodo === 'GET') {
     echo json_encode(['status' => 'ok', 'encuesta' => $encuesta]);
     exit;
 }
+// POST: Enviar encuesta anonima terminada
 
-// -------------------------------------------------------------
-// POST: Enviar resolución de encuesta (anónimo)
-// -------------------------------------------------------------
 if ($metodo === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
 
