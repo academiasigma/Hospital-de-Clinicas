@@ -1,90 +1,129 @@
 #!/bin/bash
+#Módulo de respaldos!!
 
-respaldoLocal() {
-    echo ""
-    echo "--- RESPALDO LOCAL ---"
+
+respaldo_local() {
+    requiere_root || return 1
+    local fecha
+    local destino="/var/backups/sigsm"
     fecha=$(date +"%Y%m%d_%H%M%S")
-    mkdir -p /var/backups/sigsm
-    
-    echo "1) Exportando Base de Datos MariaDB..."
-    mysqldump -u root --all-databases > "/var/backups/sigsm/db_$fecha.sql" 2>/dev/null
-    
-    echo "2) Empaquetando archivos web y base de datos..."
-    tar -czf "/var/backups/sigsm/respaldo_$fecha.tar.gz" -C /var/www/html . -C /var/backups/sigsm "db_$fecha.sql" 2>/dev/null
-    rm -f "/var/backups/sigsm/db_$fecha.sql"
-    
-    echo "Respaldo generado con éxito en: /var/backups/sigsm/respaldo_$fecha.tar.gz"
-    read -p "Presione ENTER para continuar."
-}
 
-respaldoRemoto() {
-    echo ""
-    echo "--- TRANSFERENCIA REMOTA (SCP) ---"
-    read -p "Ingrese la ruta del archivo a enviar (ej: /var/backups/sigsm/archivo.tar.gz): " rutaArchivo
-    read -p "Ingrese la IP del servidor remoto: " ipRemota
-    read -p "Ingrese el usuario remoto: " userRemoto
-    read -p "Ingrese la ruta destino remota (ej: /home/sigsm/): " rutaRemota
-    
-    if [ -f "$rutaArchivo" ]; then
-        scp "$rutaArchivo" "$userRemoto@$ipRemota:$rutaRemota"
-        echo "Transferencia SCP completada."
+    echo "--- RESPALDO LOCAL (BD + WEB CON TAR) ---"
+    mkdir -p "$destino"
+
+    echo "[*] Extrayendo volcado de base de datos..."
+    mysqldump -u root --all-databases > "$destino/db_${fecha}.sql" 2>/dev/null
+
+    echo "[*] Empaquetando y comprimiendo con tar..."
+    tar -czf "$destino/backup_${fecha}.tar.gz" -C /var/www/html . -C "$destino" "db_${fecha}.sql" 2>/dev/null
+
+    rm -f "$destino/db_${fecha}.sql"
+
+    if [ -f "$destino/backup_${fecha}.tar.gz" ]; then
+        mensaje_ok "Respaldo generado con éxito en: $destino/backup_${fecha}.tar.gz"
     else
-        echo "El archivo no existe."
+        mensaje_error "Error al crear el archivo comprimido de respaldo."
     fi
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-programarCron() {
-    echo ""
+respaldo_remoto() {
+    local archivo=""
+    local ip_remota=""
+    local user_remoto=""
+    local ruta_remota=""
+
+    echo "--- TRANSFERENCIA REMOTA (SCP) ---"
+    read -r -p "Ruta del archivo a enviar (ej: /var/backups/sigsm/backup.tar.gz): " archivo
+    if [ ! -f "$archivo" ]; then
+        mensaje_error "El archivo indicado no existe en el sistema local."
+        pausa
+        return 1
+    fi
+
+    read -r -p "IP del servidor remoto: " ip_remota
+    read -r -p "Usuario remoto: " user_remoto
+    read -r -p "Ruta destino remota (ej: /home/sigsm/): " ruta_remota
+
+    if [ -z "$ip_remota" ] || [ -z "$user_remoto" ] || [ -z "$ruta_remota" ]; then
+        mensaje_error "Todos los parámetros son obligatorios."
+        pausa
+        return 1
+    fi
+
+    echo "[*] Transfiriendo archivo..."
+    scp "$archivo" "${user_remoto}@${ip_remota}:${ruta_remota}"
+
+    if [ $? -eq 0 ]; then
+        mensaje_ok "Transferencia finalizada con éxito."
+    else
+        mensaje_error "Falló la transferencia mediante SCP."
+    fi
+    pausa
+}
+
+programar_cron() {
+    requiere_root || return 1
+    local tiempo_cron=""
+    local script_auto="/opt/sigsm/scripts/tarea_auto.sh"
+
     echo "--- PROGRAMAR RESPALDO CON CRON ---"
-    echo "Ejemplo para todos los días a las 02:00 AM: 0 2 * * *"
-    read -p "Ingrese la configuración de tiempo para CRON: " tiempoCron
-    
-    # Crear script auxiliar simple para el cron
-    cat << 'CRON_FILE' > /opt/sigsm/scripts/tarea_auto.sh
-#!/bin/bash
-fecha=$(date +"%Y%m%d_%H%M%S")
-mkdir -p /var/backups/sigsm
-mysqldump -u root --all-databases > /var/backups/sigsm/db_auto.sql 2>/dev/null
-tar -czf /var/backups/sigsm/auto_$fecha.tar.gz -C /var/www/html . /var/backups/sigsm/db_auto.sql 2>/dev/null
-rm -f /var/backups/sigsm/db_auto.sql
-CRON_FILE
-    chmod +x /opt/sigsm/scripts/tarea_auto.sh
-    
- 
-   (crontab -l 2>/dev/null; echo "$tiempoCron /opt/sigsm/scripts/tarea_auto.sh") | crontab -
-    echo "Respaldo programado exitosamente en el CRON."
-    read -p "Presione ENTER para continuar."
+    echo "Formato: Minuto Hora DíaMes Mes DíaSemana (Ej: 0 2 * * * para las 02:00 AM)"
+    read -r -p "Ingrese la configuración de tiempo: " tiempo_cron
+
+    if [ -z "$tiempo_cron" ]; then
+        mensaje_error "Debe ingresar una expresión de tiempo válida."
+        pausa
+        return 1
+    fi
+
+    if [ ! -f "$script_auto" ]; then
+        mensaje_error "No se encuentra el ejecutable programado en $script_auto."
+        pausa
+        return 1
+    fi
+
+    chmod +x "$script_auto"
+
+    (crontab -l 2>/dev/null; echo "$tiempo_cron $script_auto") | crontab -
+
+    if [ $? -eq 0 ]; then
+        mensaje_ok "Tarea programada correctamente en el demonio CRON."
+    else
+        mensaje_error "No se pudo agendar la tarea en crontab."
+    fi
+    pausa
 }
 
-verCron() {
+ver_cron() {
+    echo "--- TAREAS AGENDADAS EN CRONTAB ---"
+    crontab -l 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "No existen tareas agendadas para el usuario actual."
+    fi
     echo ""
-    echo "--- TAREAS PROGRAMADAS EN CRONTAB ---"
-    crontab -l
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-menuRespaldos() {
-    opcBkp=99
-    while [ "$opcBkp" -ne 0 ]; do
-        clear
-        echo "============================================="
-        echo "       S.I.G.S.M. - GESTIÓN DE RESPALDOS     "
-        echo "============================================="
-        echo "1) Crear respaldo local (BD + Web con tar)"
-        echo "2) Transferir respaldo a otro servidor (SCP)"
-        echo "3) Programar respaldo automático (CRON)"
-        echo "4) Ver tareas agendadas en CRON"
-        echo "0) Volver al menú principal"
-        echo "============================================="
-        read -p "Seleccione una opción: " opcBkp
-        case $opcBkp in
-            1) respaldoLocal ;;
-            2) respaldoRemoto ;;
-            3) programarCron ;;
-            4) verCron ;;
-            0) echo "Volviendo..." ;;
-            *) echo "Opción no válida." ;;
+menu_respaldos() {
+    local opcion=""
+    while [ "$opcion" != "0" ]; do
+        titulo "S.I.G.S.M. - GESTIÓN DE RESPALDOS"
+        echo " 1) Crear respaldo local (BD + Web con tar)"
+        echo " 2) Transferir respaldo a otro servidor (SCP)"
+        echo " 3) Programar respaldo automático (CRON)"
+        echo " 4) Ver tareas agendadas en CRON"
+        echo " 0) Volver al menú principal"
+        echo "==================================================================="
+        read -r -p "Seleccione una opción: " opcion
+
+        case "$opcion" in
+            1) respaldo_local ;;
+            2) respaldo_remoto ;;
+            3) programar_cron ;;
+            4) ver_cron ;;
+            0) break ;;
+            *) mensaje_error "Opción no válida"; pausa ;;
         esac
     done
 }

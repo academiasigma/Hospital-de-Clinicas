@@ -1,29 +1,27 @@
 #!/bin/bash
-# ==============================================================================
-# S.I.G.S.M. - Panel de Control del Operador de Centro de Cómputos
-# Sistema Informático de Gestión de Servicios Médicos - Hospital de Clínicas
-# ==============================================================================
 
-# Verificación de superusuario
-if [ "$EUID" -ne 0 ]; then
-    echo "Error: Este script debe ejecutarse con privilegios de root (use sudo o su -)."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -f "$SCRIPT_DIR/comunes.sh" ]; then
+    source "$SCRIPT_DIR/comunes.sh"
+else
+    echo "Error crítico: No se encontró el archivo $SCRIPT_DIR/comunes.sh"
     exit 1
 fi
 
-# Importación de los módulos secundarios (igual a como se dio en clase)
-source "$SCRIPT_DIR./usuarios.sh"
-source "$SCRIPT_DIR./respaldo.sh"
-source "$CRIPT_DIR./redes.sh"
-source "$CRIPT_DIR./base_datos.sh"
-source "$CRIPT_DIR./firewall.sh"
-source "$CRIPT_DIR./logs.sh"
+requiere_root || exit 1
 
-opcPrincipal=99
-while [ "$opcPrincipal" -ne 0 ]; do
-    clear
-    echo "==================================================================="
-    echo "         S.I.G.S.M. - CENTRO DE CÓMPUTOS (HOSPITAL DE CLÍNICAS)    "
-    echo "==================================================================="
+source "$SCRIPT_DIR/usuarios.sh"
+source "$SCRIPT_DIR/respaldo.sh"
+source "$SCRIPT_DIR/redes.sh"
+source "$SCRIPT_DIR/base_datos.sh"
+source "$SCRIPT_DIR/firewall.sh"
+source "$SCRIPT_DIR/logs.sh"
+
+opcion=""
+
+while [ "$opcion" != "0" ]; do
+    titulo "S.I.G.S.M. - CENTRO DE CÓMPUTOS (HOSPITAL DE CLÍNICAS)"
     echo " 1) Gestión de Usuarios y Grupos"
     echo " 2) Gestión de Respaldos (SCP y CRON)"
     echo " 3) Configuración de Redes (NMTUI)"
@@ -32,22 +30,17 @@ while [ "$opcPrincipal" -ne 0 ]; do
     echo " 6) Auditoría y Logs del Sistema (/var/log/secure)"
     echo " 0) Salir"
     echo "==================================================================="
-    read -p "Seleccione una opción: " opcPrincipal
+    read -r -p "Seleccione una opción: " opcion
 
-    case $opcPrincipal in
-        1) menuUsuarios ;;
-        2) menuRespaldos ;;
-        3) menuRedes ;;
-        4) menuBaseDatos ;;
-        5) menuFirewall ;;
-        6) menuLogs ;;
-        0)
-            echo "Saliendo del sistema de administración S.I.G.S.M..."
-            exit 0
-            ;;
-        *)
-            echo "Opción no válida."
-            read -p "Presione ENTER para continuar."
-            ;;
+    case "$opcion" in
+        1) menu_usuarios ;;
+        2) menu_respaldos ;;
+        3) menu_redes ;;
+        4) menu_base_datos ;;
+        5) menu_firewall ;;
+        6) menu_logs ;;
+        0) echo "Cerrando panel de administración..."; break ;;
+        *) mensaje_error "No es una opción válida"; pausa ;;
     esac
 done
+
