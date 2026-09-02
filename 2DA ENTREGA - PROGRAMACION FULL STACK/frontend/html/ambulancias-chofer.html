@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Móvil de Chofer - S.I.G.S.M.</title>
+    <link rel="stylesheet" href="../css/style-portal.css">
+    <link rel="stylesheet" href="../css/style-ambulancias.css">
+</head>
+<body class="mobile-body">
+    <div class="mobile-frame">
+        <header class="mobile-header">
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="mobile-logo">
+            <h2>Terminal Móvil</h2>
+            <p>Módulo de Trazabilidad para Choferes</p>
+        </header>
+
+        <main class="mobile-container">
+            <!-- Selector del chofer activo para la simulación -->
+            <section class="card select-driver-card">
+                <label for="selectChoferActivo"><strong>👤 Identificarse como Chofer:</strong></label>
+                <select id="selectChoferActivo">
+                    <option value="Carlos Rodríguez">Carlos Rodríguez</option>
+                    <option value="Mario Gómez">Mario Gómez</option>
+                    <option value="Juan Pérez">Juan Pérez</option>
+                    <option value="Marcelo Silva">Marcelo Silva</option>
+                    <option value="Santiago Pereira">Santiago Pereira</option>
+                    <option value="Jorge González">Jorge González</option>
+                    <option value="Alejandro Rodríguez">Alejandro Rodríguez</option>
+                    <option value="Néstor Cabrera">Néstor Cabrera</option>
+                </select>
+                
+            </section>
+
+            <!-- Contenedor del viaje asignado -->
+            <div id="sinViajeBox" class="card text-center py-4">
+                <div class="no-travel-spinner"></div>
+                <h4 style="margin-top: 1rem; color: #475569;">Buscando viajes asignados...</h4>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Por favor, asigne un traslado a este chofer desde el panel administrativo de despacho.</p>
+            </div>
+
+            <div id="viajeAsignadoBox" class="card travel-details-card oculta">
+                <div class="travel-header">
+                    <span id="badgePrioridadChofer" class="badge-prioridad">ALTA</span>
+                    <h4>Viaje ID: <span id="txtViajeId">#1</span></h4>
+                </div>
+                
+                <div class="travel-route">
+                    <div class="route-point">
+                        <span class="route-icon route-start"><span>●</span></span>
+                        <div class="route-desc">
+                            <small>ORIGEN</small>
+                            <strong id="txtViajeOrigen">...</strong>
+                        </div>
+                    </div>
+                    <div class="route-line"></div>
+                    <div class="route-point">
+                        <span class="route-icon route-end"><span>●</span></span>
+                        <div class="route-desc">
+                            <small>DESTINO</small>
+                            <strong id="txtViajeDestino">...</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="travel-meta">
+                    <p><strong>Paciente:</strong> <span id="txtViajePaciente">...</span></p>
+                    <p><strong>Vehículo:</strong> <span id="txtViajeVehiculo">...</span></p>
+                    <p><strong>Enfermero:</strong> <span id="txtViajeEnfermero">...</span></p>
+                    <p><strong>Estado Actual:</strong> <span id="txtViajeEstado" class="badge-estado">...</span></p>
+                </div>
+
+                <!-- Botones de acción de la simulación -->
+                <div class="travel-actions" id="actionsPendiente">
+                    <button id="btnIniciarViaje" class="btn-mobile btn-mobile-primary">Iniciar Traslado</button>
+                </div>
+
+                <div class="travel-actions oculta" id="actionsEnCurso">
+                    <button id="btnFinalizarViaje" class="btn-mobile btn-mobile-success">Completar Traslado</button>
+                    
+                    <div class="alert-trigger-box">
+                        <p style="font-size: 0.8rem; color: #475569; font-weight: bold; margin-bottom: 0.5rem;">⚠️ Reportar Incidencia / Tránsito:</p>
+                        <div class="alert-buttons">
+                            <button class="btn-mobile-alert" data-alerta="Desvío por Obras">Desvío Obras</button>
+                            <button class="btn-mobile-alert" data-alerta="Tránsito Congestionado">Tránsito Lento</button>
+                            <button class="btn-mobile-alert" data-alerta="Incidencia de Seguridad">Ruta con Demoras</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mobile-footer text-center">
+            <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <script src="../js/ambulancias-chofer.js"></script>
+</body>
+</html>

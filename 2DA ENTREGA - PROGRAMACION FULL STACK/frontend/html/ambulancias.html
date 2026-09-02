@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Control de Traslados</title>
+    <link rel="stylesheet" href="../css/style-documentos.css">
+    <link rel="stylesheet" href="../css/style-ambulancias.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="header-logo">
+        </div>
+        <div class="user-info">
+            <span id="txtNombre">Cargando...</span>
+            <span id="txtRol" class="badge-rol">...</span>
+            <a href="panel.html" class="btn-nav">Volver al Panel</a>
+            <button id="btnCerrarSesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- cards de estadísticas simunladas -->
+        <section class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-icon-container">
+                    <img src="../img/stat-total.svg" class="stat-svg-icon" alt="Total">
+                </div>
+                <div class="stat-desc">
+                    <h3 id="statTotalVal">0</h3>
+                    <p>Traslados Totales</p>
+                </div>
+            </div>
+            <div class="stat-card stat-pending">
+                <div class="stat-icon-container">
+                    <img src="../img/stat-pending.svg" class="stat-svg-icon" alt="Pendientes">
+                </div>
+                <div class="stat-desc">
+                    <h3 id="statPendientesVal">0</h3>
+                    <p>Pendientes</p>
+                </div>
+            </div>
+            <div class="stat-card stat-progress">
+                <div class="stat-icon-container">
+                    <img src="../img/stat-progress.svg" class="stat-svg-icon" alt="En Curso">
+                </div>
+                <div class="stat-desc">
+                    <h3 id="statEnCursoVal">0</h3>
+                    <p>En Curso</p>
+                </div>
+            </div>
+            <div class="stat-card stat-completed">
+                <div class="stat-icon-container">
+                    <img src="../img/stat-completed.svg" class="stat-svg-icon" alt="Completados">
+                </div>
+                <div class="stat-desc">
+                    <h3 id="statCompletadosVal">0</h3>
+                    <p>Completados</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contenedor Doble: Alta y Listado -->
+        <div class="ambulancias-grid">
+            <!-- Columna Izquierda: Tabla de traslados activos -->
+            <section class="list-card">
+                <div class="list-header">
+                    <h3>Monitoreo de Viajes en Tiempo Real</h3>
+                    <div class="list-actions">
+                        <button id="btnLimpiarSimulacion" class="btn-secondary btn-small">Restablecer Simulación</button>
+                        <a href="ambulancias-chofer.html" target="_blank" class="btn-action-highlight">📱 Abrir Terminal de Chofer</a>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Paciente / Objeto</th>
+                                <th>Origen &rarr; Destino</th>
+                                <th>Recursos Asignados</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Alertas / Tránsito</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaTrasladosCuerpo">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Columna derecha: Formulario de Alta -->
+            <section class="form-card">
+                <h3>Despachar Nuevo Traslado</h3>
+                <p class="form-subtitle">Asignación de unidades sanitarias y personal de guardia.</p>
+                
+                <form id="formAltaTraslado" class="styled-form">
+                    <div class="form-group">
+                        <label for="tipo_traslado">Tipo de Traslado *</label>
+                        <select id="tipo_traslado" name="tipo_traslado" required>
+                            <option value="paciente">Paciente Clínico</option>
+                            <option value="objeto">Órgano / Material Biológico</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="grupo_paciente">
+                        <label for="paciente">Paciente *</label>
+                        <select id="paciente" name="paciente" required>
+                            <option value="">Seleccione un paciente</option>
+                            <option value="Facundo Guedikian">Facundo Guedikian</option>
+                            <option value="Ihojan Robaina">Ihojan Robaina</option>
+                            <option value="Ezequiel Gomez">Ezequiel Gomez</option>
+                            <option value="Nicolas Chaitelle">Nicolas Chaitelle</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group oculta" id="grupo_objeto">
+                        <label for="objeto">Órgano / Material Biológico *</label>
+                        <select id="objeto" name="objeto">
+                            <option value="">Seleccione material</option>
+                            <option value="Órgano: Corazón para Trasplante">Órgano: Corazón para Trasplante</option>
+                            <option value="Muestra Biológica: Biopsia urgente">Muestra Biológica: Biopsia urgente</option>
+                            <option value="Insumos: Medicamentos Oncológicos">Insumos: Medicamentos Oncológicos</option>
+                            <option value="Equipamiento: Respirador de Traslado">Equipamiento: Respirador de Traslado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="origen">Origen de Traslado *</label>
+                            <select id="origen" name="origen" required>
+                                <option value="">Seleccione origen</option>
+                                <option value="Puerta de Emergencias">Puerta de Emergencias</option>
+                                <option value="Piso 3 - Sala 302">Piso 3 - Sala 302</option>
+                                <option value="Piso 5 - CTI de Adultos">Piso 5 - CTI de Adultos</option>
+                                <option value="Policlínica Médica">Policlínica Médica</option>
+                                <option value="Block Quirúrgico - Piso 2">Block Quirúrgico - Piso 2</option>
+                                <option value="OTRO">Otro (Especificar...)</option>
+                            </select>
+                            <div id="grupo_origen_otro" class="oculta" style="margin-top: 0.5rem;">
+                                <input type="text" id="origen_otro" placeholder="Escriba origen personalizado..." style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="destino">Destino de Traslado *</label>
+                            <select id="destino" name="destino" required>
+                                <option value="">Seleccione destino</option>
+                                <option value="Sala de Tomografía (Piso 1)">Sala de Tomografía (Piso 1)</option>
+                                <option value="CTI de Adultos - Piso 5">CTI de Adultos - Piso 5</option>
+                                <option value="Piso 8 - Sala de Recuperación">Piso 8 - Sala de Recuperación</option>
+                                <option value="Alta Institucional (Salida)">Alta Institucional (Salida)</option>
+                                <option value="DTI - Piso 6">DTI - Piso 6</option>
+                                <option value="OTRO">Otro (Especificar...)</option>
+                            </select>
+                            <div id="grupo_destino_otro" class="oculta" style="margin-top: 0.5rem;">
+                                <input type="text" id="destino_otro" placeholder="Escriba destino personalizado..." style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="vehiculo">Vehículo Asignado *</label>
+                        <select id="vehiculo" name="vehiculo" required>
+                            <option value="">Seleccione un vehículo</option>
+                            <option value="Móvil 101 (Soporte Básico - Matrícula HCA-1020)">Móvil 101 (Soporte Básico - Matrícula HCA-1020)</option>
+                            <option value="Móvil 102 (Soporte Avanzado - Matrícula HCB-3040)">Móvil 102 (Soporte Avanzado - Matrícula HCB-3040)</option>
+                            <option value="Móvil 103 (Traslado Insumos - Matrícula HCC-5060)">Móvil 103 (Traslado Insumos - Matrícula HCC-5060)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="chofer">Chofer Asignado *</label>
+                            <select id="chofer" name="chofer" required>
+                                <option value="">Seleccione chofer</option>
+                                <option value="Carlos Rodríguez">Carlos Rodríguez</option>
+                                <option value="Mario Gómez">Mario Gómez</option>
+                                <option value="Juan Pérez">Juan Pérez</option>
+                                <option value="Marcelo Silva">Marcelo Silva</option>
+                                <option value="Santiago Pereira">Santiago Pereira</option>
+                                <option value="Jorge González">Jorge González</option>
+                                <option value="Alejandro Rodríguez">Alejandro Rodríguez</option>
+                                <option value="Néstor Cabrera">Néstor Cabrera</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="grupo_enfermero">
+                            <label for="enfermero">Enfermero Acompañante *</label>
+                            <select id="enfermero" name="enfermero" required>
+                                <option value="">Seleccione enfermero</option>
+                                <option value="Ana Martínez">Ana Martínez (Habilitada)</option>
+                                <option value="Roberto Benítez">Roberto Benítez (Habilitado)</option>
+                                <option value="No requiere">No requiere (Traslado Común)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prioridad">Nivel de Prioridad *</label>
+                        <select id="prioridad" name="prioridad" required>
+                            <option value="Baja">Baja (Traslado Común)</option>
+                            <option value="Media">Media (Monitoreo Clínico)</option>
+                            <option value="Alta">Alta (Urgencia Médica)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="btnDespachar" class="btn-primary w-100">🚀 Despachar Unidad</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/ambulancias.js"></script>
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>
