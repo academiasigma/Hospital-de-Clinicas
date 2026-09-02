@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnIngresar.textContent = 'Verificando...';
 
         try {
-            const respuesta = await fetch('api/login.php', {
+            const respuesta = await fetch('../api/login.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

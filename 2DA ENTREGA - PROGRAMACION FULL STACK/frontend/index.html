@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.I.G.S.M. - Acceso</title>
+    <title>S.I.G.S.M. - Acceso Unificado</title>
     <link rel="stylesheet" href="css/style-login.css">
 </head>
- <body>
+<body>
     <main class="login-container">
         <section class="login-card">
             <header class="login-header">
-                <span class="badge-hospital">Hospital de Clínicas</span>
+                <div class="login-logo-container">
+                    <img src="img/HospitalDeClinicas.png" alt="Hospital de Clínicas" class="login-logo">
+                </div>
                 <p>Gestión de Servicios Médicos y Traslados</p>
             </header>
 
             <div id="alerta" class="alerta oculta" role="alert"></div>
 
-        <!-- Formulario del login para los funcionarios -->
+            <!-- Formulario de acceso para los funcionarios -->
             <form id="loginForm" novalidate>
                 <div class="form-group">
                     <label for="email">Correo Institucional</label>
@@ -47,20 +49,21 @@
                 </button>
             </form>
 
-            <!-- Acceso directo para los pacientes -->
+            <!-- Acceso directo para Pacientes/Invitados -->
             <div class="patient-access-box">
-                <p>¿Es paciente del HC o desea ver documentación informativa?</p>
+                <p>¿Es paciente del Hospital de Clinicas o desea ver documentación informativa?</p>
                 <a href="html/portal-invitados.html" class="btn-patient">
                     Ingresar como Paciente / Invitado
                 </a>
             </div>
 
             <footer class="login-footer">
-                <p>¿Necesita ayuda para ingresar? Contáctenos al correo [contacto@hc.edu.uy]</p>
+                <p>¿Necesita ayuda para ingresar? Contáctenos al correo <a href="mailto:contacto@hc.edu.uy" style="color: #006699; text-decoration: underline;">contacto@hc.edu.uy</a></p>
+                <p style="margin-top: 0.75rem; font-size: 0.65rem; color: #94a3b8;">Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
             </footer>
         </section>
     </main>
 
     <script src="js/login.js"></script>
- </body>
+</body>
 </html>

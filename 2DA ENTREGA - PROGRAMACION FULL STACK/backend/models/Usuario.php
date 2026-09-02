@@ -17,8 +17,7 @@ class Usuario {
         $this->conexion = $db->conectar();
     }
 
-    // Busca un usuario por su dirección de correo institucional.
-     
+     //Busca un usuario por su dirección de correo electrónico institucional
     public function obtenerPorEmail(string $email): ?array {
         $sql = "SELECT id_usuario, email, nombre, contrasenia, rol, estado 
  FROM {$this->tabla} 
@@ -33,8 +32,24 @@ class Usuario {
         return $usuario ?: null;
     }
 
-    //Valida las credenciales recibidas contra el hash de la base de datos y el estado activo.
-     
+    
+     //Busca un usuario por su ID de clave primaria
+    public function obtenerPorId(int $id): ?array {
+        $sql = "SELECT id_usuario, email, nombre, contrasenia, rol, estado 
+ FROM {$this->tabla} 
+ WHERE id_usuario = :id 
+ LIMIT 1";
+
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $usuario = $stmt->fetch();
+        return $usuario ?: null;
+    }
+
+    
+     //Valida las credenciales recibidas contra el hash de la base de datos y el estado activo
     public function autenticar(string $email, string $password): array {
         $usuario = $this->obtenerPorEmail($email);
 
@@ -55,7 +70,7 @@ class Usuario {
             ];
         }
 
-        // Verificación criptográfica con password_verify
+        // Verificación criptografica con password_verify
         if (!password_verify($password, $usuario['contrasenia'])) {
             return [
                 'exito'   => false,
@@ -82,5 +97,71 @@ class Usuario {
                 'rol'        => $usuario['rol']
             ]
         ];
+    }
+
+     //Obtiene el listado completo de todos los usuarios de la institución
+    public function listarTodos(): array {
+        $sql = "SELECT id_usuario, email, nombre, rol, estado FROM {$this->tabla} ORDER BY nombre ASC";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    
+     // Registra de manera segura un nuevo funcionario en la institución
+    public function crear(array $datos): bool {
+        // Encriptación criptográfica (Secure Hash)
+        $hashPassword = password_hash($datos['contrasenia'], PASSWORD_BCRYPT);
+
+        $sql = "INSERT INTO {$this->tabla} (email, nombre, contrasenia, rol, estado) 
+                VALUES (:email, :nombre, :contrasenia, :rol, :estado)";
+
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':email', $datos['email'], PDO::PARAM_STR);
+        $stmt->bindParam(':nombre', $datos['nombre'], PDO::PARAM_STR);
+        $stmt->bindParam(':contrasenia', $hashPassword, PDO::PARAM_STR);
+        $stmt->bindParam(':rol', $datos['rol'], PDO::PARAM_STR);
+        $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+
+        return $stmt->execute();
+    }
+
+     //Actualiza de manera segura la información de un funcionario administrativo existente
+    public function actualizar(int $id, array $datos): bool {
+        $actualizarContrasenia = !empty($datos['contrasenia']);
+
+        $sql = "UPDATE {$this->tabla} 
+                SET email = :email, 
+                    nombre = :nombre, 
+                    rol = :rol, 
+                    estado = :estado";
+
+        if ($actualizarContrasenia) {
+            $sql .= ", contrasenia = :contrasenia";
+        }
+
+        $sql .= " WHERE id_usuario = :id";
+
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':email', $datos['email'], PDO::PARAM_STR);
+        $stmt->bindParam(':nombre', $datos['nombre'], PDO::PARAM_STR);
+        $stmt->bindParam(':rol', $datos['rol'], PDO::PARAM_STR);
+        $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+        if ($actualizarContrasenia) {
+            $hashPassword = password_hash($datos['contrasenia'], PASSWORD_BCRYPT);
+            $stmt->bindParam(':contrasenia', $hashPassword, PDO::PARAM_STR);
+        }
+
+        return $stmt->execute();
+    }
+
+     //Elimina la ficha de un usuario administrativo por su ID de clave primaria.
+    public function eliminar(int $id): bool {
+        $sql = "DELETE FROM {$this->tabla} WHERE id_usuario = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }
