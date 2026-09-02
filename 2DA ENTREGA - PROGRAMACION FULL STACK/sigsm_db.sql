@@ -1,8 +1,9 @@
+
 DROP DATABASE IF EXISTS sigsm_db;
 CREATE DATABASE sigsm_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE sigsm_db;
 
--- SECCIÓN 1: TABLAS MAESTRAS  y INDEPENDIENTES
+-- SECCIÓN 1: TABLAS MAESTRAS Y LAS INDEPENDIENTES
 
 CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT,
@@ -56,7 +57,6 @@ CREATE TABLE paciente (
     CONSTRAINT CS_paciente_documento UNIQUE (documento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
 CREATE TABLE objeto (
     id_objeto INT AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
@@ -64,6 +64,7 @@ CREATE TABLE objeto (
     tipo_objeto ENUM('organo', 'muestra_biologica', 'insumo_medico', 'documento', 'equipamiento') NOT NULL,
     CONSTRAINT CP_objeto PRIMARY KEY (id_objeto)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 CREATE TABLE categoria (
     id_categoria INT AUTO_INCREMENT,
@@ -78,15 +79,13 @@ CREATE TABLE documento (
     id_documento INT AUTO_INCREMENT,
     titulo VARCHAR(150) NOT NULL,
     archivo VARCHAR(255) NOT NULL,
-    codigo_qr VARCHAR(255) NOT NULL,
-    es_sensible TINYINT(1) DEFAULT 0,
     id_usuario INT NOT NULL,
     id_categoria INT NOT NULL,
     CONSTRAINT CP_documento PRIMARY KEY (id_documento),
-    CONSTRAINT CS_documento_codigo_qr UNIQUE (codigo_qr),
     CONSTRAINT CE_documento_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT CE_documento_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 CREATE TABLE encuesta (
     id_encuesta INT AUTO_INCREMENT,
@@ -97,6 +96,7 @@ CREATE TABLE encuesta (
     CONSTRAINT CE_encuesta_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
 CREATE TABLE pregunta (
     id_pregunta INT AUTO_INCREMENT,
     enunciado TEXT NOT NULL,
@@ -106,7 +106,6 @@ CREATE TABLE pregunta (
     CONSTRAINT CE_pregunta_encuesta FOREIGN KEY (id_encuesta) REFERENCES encuesta(id_encuesta) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Añadida para  la 3FN en las preguntas de Opción Multiple
 CREATE TABLE opcion_pregunta (
     id_opcion INT AUTO_INCREMENT,
     texto_opcion VARCHAR(255) NOT NULL,
@@ -134,7 +133,6 @@ CREATE TABLE respuesta (
     CONSTRAINT CE_respuesta_pregunta FOREIGN KEY (id_pregunta) REFERENCES pregunta(id_pregunta) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
---Con el Enumerado de los estados restringidos
 CREATE TABLE traslado (
     id_traslado INT AUTO_INCREMENT,
     fecha DATE NOT NULL,
@@ -170,17 +168,18 @@ CREATE TABLE traslado (
     CONSTRAINT CE_traslado_objeto FOREIGN KEY (id_objeto) REFERENCES objeto(id_objeto) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- SECCIÓN 3: SCRIPT DML (datos de prueba)
 
--- inserción de los Usuarios iniciales con los roles reales del sistema
--- Clave de prueba: 'password' encriptada con password_hash
+-- SECCIÓN 3: SCRIPT DML (los datos de Prueba Iniciales)
+
+-- insert de los usuarios iniciales con los roles del sistema
+-- Clave de prueba: "password" encriptada con password_hash
 INSERT INTO usuario (email, nombre, contrasenia, rol, estado) VALUES 
 ('superadmin@hc.edu.uy', 'SuperAdmin IT', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo'),
 ('gestor@hc.edu.uy', 'Gestor Integral', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'GESTOR_INTEGRAL', 'Activo'),
 ('director@hc.edu.uy', 'Director General', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'DIRECTOR_GENERAL', 'Activo'),
 ('division@hc.edu.uy', 'Usuario Division', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'USUARIO_DIVISION', 'Activo');
 
--- Inserción de las categorías médicas
+-- Insert de categorías médicas
 INSERT INTO categoria (nombre) VALUES 
 ('Indicaciones Médicas y Quirúrgicas'),
 ('Preparación para Estudios'),
@@ -188,10 +187,16 @@ INSERT INTO categoria (nombre) VALUES
 ('Encuestas de Satisfacción'),
 ('Protocolos de Prevención');
 
--- Datos de prueba
+-- Recursos de prueba
 INSERT INTO chofer (nombre, telefono, licencia) VALUES 
 ('Carlos Rodríguez', '099123456', 'LIC-CH-001'),
-('Mario Gómez', '098765432', 'LIC-CH-002');
+('Mario Gómez', '098765432', 'LIC-CH-002'),
+('Juan Pérez', '097111222', 'LIC-CH-003'),
+('Marcelo Silva', '096333444', 'LIC-CH-004'),
+('Santiago Pereira', '095555666', 'LIC-CH-005'),
+('Jorge González', '094777888', 'LIC-CH-006'),
+('Alejandro Rodríguez', '093999000', 'LIC-CH-007'),
+('Néstor Cabrera', '092111333', 'LIC-CH-008');
 
 INSERT INTO enfermero (nombre, telefono, matricula_profesional) VALUES 
 ('Ana Martínez', '091112233', 'ENF-MAT-101');
@@ -200,30 +205,45 @@ INSERT INTO vehiculo (tipo_vehiculo, matricula, estado) VALUES
 ('Ambulancia', 'SCA-1001', 'Disponible'),
 ('Auto', 'SCA-2002', 'Disponible');
 
--- Pacientes prueba
+-- Pacientes de prueba (algunas cédulas para pruebas)
 INSERT INTO paciente (documento, nombre, telefono, fecha_de_nacimiento, requiere_oxigeno, requiere_camilla, requiere_aislamiento, se_maneja_por_sus_medios) VALUES 
-('48889991', 'María Silva', '092333444', '1985-04-12', 0, 0, 0, 1),
-('12345678', 'Juan Pérez', '099555666', '1975-08-20', 1, 0, 0, 0);
+('57327104', 'Facundo Guedikian', '099111222', '1995-01-01', 0, 0, 0, 1),
+('57915575', 'Ihojan Robaina', '099222333', '1996-02-02', 0, 0, 0, 1),
+('57516640', 'Ezequiel Gomez', '099333444', '1997-03-03', 0, 0, 0, 1),
+('57700578', 'Nicolas Chaitelle', '099444555', '1998-04-04', 0, 0, 0, 1);
+
+-- Objetos de prueba (Módulo de Traslados y ambulancias)
+INSERT INTO objeto (nombre, caracteristicas, tipo_objeto) VALUES 
+('Órgano: Corazón para Trasplante', 'Caja térmica refrigerada, transporte urgente, prioridad alta', 'organo'),
+('Muestra Biológica: Biopsia urgente', 'Tubo refrigerado para laboratorio de patología', 'muestra_biologica'),
+('Insumos: Medicamentos Oncológicos', 'Caja sellada para farmacia, mantener en temperatura fresca', 'insumo_medico');
 
 -- Documentos clínicos iniciales
-INSERT INTO documento (titulo, archivo, codigo_qr, es_sensible, id_usuario, id_categoria) VALUES 
-('Indicaciones de interrupción voluntaria del embarazo', 'uploads/documentos/ive_indicaciones.pdf', 'QR_SIGSM_IVE_001', 1, 1, 1),
-('Preparación para ecocardiograma transesofágico', 'uploads/documentos/ecocardiograma_prep.pdf', 'QR_SIGSM_ECO_002', 0, 1, 2),
-('Plan de alta de enfermería en Nefrología', 'uploads/documentos/nefrologia_alta.pdf', 'QR_SIGSM_NEF_003', 0, 1, 3);
+INSERT INTO documento (titulo, archivo, id_usuario, id_categoria) VALUES 
+('Indicaciones de interrupción voluntaria del embarazo', 'uploads/documentos/ive_indicaciones.pdf', 1, 1),
+('Preparación para ecocardiograma transesofágico', 'uploads/documentos/ecocardiograma_prep.pdf', 1, 2),
+('Plan de alta de enfermería en Nefrología', 'uploads/documentos/nefrologia_alta.pdf', 1, 3);
 
--- Encuestas activas de prueba 
+-- Encuestas activas de prueba (Módulo de Satisfacción del Paciente)
 INSERT INTO encuesta (id_encuesta, comentarios, estado, id_categoria) VALUES 
 (1, 'Encuesta del Área Ginecología/IVE', 'Activa', 1),
-(2, 'Encuesta del Área Estudios Imagenológicos', 'Activa', 2);
+(2, 'Encuesta del Área Estudios Imagenológicos', 'Activa', 2),
+(3, 'Encuesta del Área Enfermería y Trasplantes', 'Activa', 3);
 
--- Preguntas asociadas a la encuesta 1 (Categoría 1)
+-- PREGUNTAS ASOCIADAS A LA ENCUESTA 1 (Categoría 1)
 INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
 (1, '¿La información provista en la guía clínica fue clara y fácil de entender?', 'Si/No', 1),
 (2, 'Califique la calidad de la atención médica recibida durante su consulta:', 'Escala_1_5', 1),
 (3, 'Sugerencias o comentarios adicionales para mejorar este instructivo:', 'Texto Libre', 1);
 
--- Preguntas asociadas a la encuesta 2 (Categoría 2)
+-- PREGUNTAS ASOCIADAS A LA ENCUESTA 2 (Categoría 2)
 INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
 (4, '¿Le resultó sencillo seguir las indicaciones de ayuno y preparación para su estudio?', 'Si/No', 2),
 (5, 'Califique la amabilidad y el respeto mostrado por el personal técnico:', 'Escala_1_5', 2),
 (6, 'Deje sus comentarios sobre su experiencia general de preparación:', 'Texto Libre', 2);
+
+-- PREGUNTAS ASOCIADAS A LA ENCUESTA 3 ( Categoría 3)
+INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
+(7, '¿La explicación de los cuidados post-alta domiciliaria por parte del enfermero fue clara?', 'Si/No', 3),
+(8, 'Califique la preparación técnica y el trato brindado por el personal de enfermería:', 'Escala_1_5', 3),
+(9, 'Escriba aquí sus observaciones o sugerencias para mejorar el plan de alta:', 'Texto Libre', 3);
