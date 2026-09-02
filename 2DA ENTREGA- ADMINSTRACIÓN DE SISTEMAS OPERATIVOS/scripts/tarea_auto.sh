@@ -1,6 +1,14 @@
 #!/bin/bash
-fecha=$(date +"%Y%m%d_%H%M%S")
-mkdir -p /var/backups/sigsm
-mysqldump -u root --all-databases > /var/backups/sigsm/db_auto.sql 2>/dev/null
-tar -czf /var/backups/sigsm/auto_$fecha.tar.gz -C /var/www/html . /var/backups/sigsm/db_auto.sql 2>/dev/null
-rm -f /var/backups/sigsm/db_auto.sql
+#Script de respaldo automatizado con CRON!!
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+FECHA=$(/bin/date +"%Y%m%d_%H%M%S")
+DESTINO="/var/backups/sigsm"
+
+/bin/mkdir -p "$DESTINO"
+
+/usr/bin/mysqldump -u root --all-databases > "$DESTINO/db_auto.sql" 2>/dev/null
+/usr/bin/tar -czf "$DESTINO/auto_${FECHA}.tar.gz" -C /var/www/html . -C "$DESTINO" db_auto.sql 2>/dev/null
+/bin/rm -f "$DESTINO/db_auto.sql"
+
+exit 0

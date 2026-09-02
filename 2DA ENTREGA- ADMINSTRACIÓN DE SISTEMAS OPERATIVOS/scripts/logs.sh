@@ -1,71 +1,105 @@
 #!/bin/bash
+#¡¡Módulo de Logs!!
 
-verAccesosSsh() {
+LOG_FILE="/var/log/secure"
+
+ver_accesos_ssh() {
+    requiere_root || return 1
+    titulo "ACCESOS SSH (ACEPTADOS Y FALLIDOS)"
+    if [ -f "$LOG_FILE" ]; then
+        grep -E "sshd.*(Accepted|Failed)" "$LOG_FILE" | tail -n 25
+    else
+        mensaje_error "No se encontró el registro en $LOG_FILE."
+    fi
     echo ""
-    echo "--- ACCESOS SSH (FECHA, HORA Y ESTADO) ---"
-    grep -E "sshd.*(Accepted|Failed)" /var/log/secure 2>/dev/null | tail -n 20
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-verIniciosSesion() {
+ver_inicios_sesion() {
+    requiere_root || return 1
+    titulo "INICIOS Y CIERRES DE SESIÓN"
+    if [ -f "$LOG_FILE" ]; then
+        grep -E "session opened|session closed" "$LOG_FILE" | tail -n 25
+    else
+        mensaje_error "No se encontró el archivo $LOG_FILE."
+    fi
     echo ""
-    echo "--- INICIOS Y CIERRES DE SESIÓN ---"
-    grep -E "session (opened|closed)" /var/log/secure 2>/dev/null | tail -n 20
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-verComandosSudo() {
+ver_comandos_sudo() {
+    requiere_root || return 1
+    titulo "COMANDOS EJECUTADOS CON SUDO"
+    if [ -f "$LOG_FILE" ]; then
+        grep "sudo:" "$LOG_FILE" | grep "COMMAND=" | tail -n 25
+    else
+        mensaje_error "No se encontró el archivo $LOG_FILE."
+    fi
     echo ""
-    echo "--- COMANDOS SUDO EJECUTADOS ---"
-    grep "sudo:" /var/log/secure 2>/dev/null | tail -n 20
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-verJournalSsh() {
-    echo ""
-    echo "Mostrando logs de SSH en vivo (Presione Ctrl+C para salir)..."
+ver_journal_ssh() {
+    requiere_root || return 1
+    echo "--- MONITOREO SSH EN TIEMPO REAL (Ctrl + C para salir) ---"
     sleep 1
-    journalctl -u sshd -n 20 -f
+    journalctl -u sshd -f
 }
 
-buscarPatronGrep() {
+buscar_patron_grep() {
+    requiere_root || return 1
+    local patron=""
+    echo "--- BUSCAR EN $LOG_FILE ---"
+    read -r -p "Ingrese palabra o patrón a buscar: " patron
+
+    if [ -z "$patron" ]; then
+        mensaje_error "El patrón de búsqueda no puede estar vacío."
+        pausa
+        return 1
+    fi
+
+    if [ -f "$LOG_FILE" ]; then
+        grep --color=auto -i "$patron" "$LOG_FILE" | tail -n 30
+    else
+        mensaje_error "No se encontró el archivo $LOG_FILE."
+    fi
     echo ""
-    echo "--- BÚSQUEDA POR PATRÓN (GREP) ---"
-    read -p "Ingrese la palabra o término a buscar (ej: Failed, root, sigsm): " termino
-    echo "Resultados coincidentes en /var/log/secure:"
-    grep --color=always -i "$termino" /var/log/secure 2>/dev/null | tail -n 25
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-verLogCompleto() {
-    less /var/log/secure
+ver_log_completo() {
+    requiere_root || return 1
+    if [ -f "$LOG_FILE" ]; then
+        less "$LOG_FILE"
+    else
+        mensaje_error "No se encontró el archivo $LOG_FILE."
+        pausa
+    fi
 }
 
-menuLogs() {
-    opcLog=99
-    while [ "$opcLog" -ne 0 ]; do
-        clear
-        echo "============================================="
-        echo "       S.I.G.S.M. - AUDITORÍA Y LOGS         "
-        echo "============================================="
-        echo "1) Ver accesos SSH (Aceptados y Fallidos)"
-        echo "2) Ver inicios y cierres de sesión"
-        echo "3) Ver comandos ejecutados con sudo"
-        echo "4) Monitoreo SSH en vivo (journalctl -u sshd)"
-        echo "5) Buscar patrón con grep en /var/log/secure"
-        echo "6) Ver /var/log/secure completo con less"
-        echo "0) Volver al menú principal"
-        echo "============================================="
-        read -p "Seleccione una opción: " opcLog
-        case $opcLog in
-            1) verAccesosSsh ;;
-            2) verIniciosSesion ;;
-            3) verComandosSudo ;;
-            4) verJournalSsh ;;
-            5) buscarPatronGrep ;;
-            6) verLogCompleto ;;
-            0) echo "Volviendo..." ;;
-            *) echo "Opción no válida." ;;
+menu_logs() {
+    local opcion=""
+    while [ "$opcion" != "0" ]; do
+        titulo "S.I.G.S.M. - AUDITORÍA Y LOGS (/var/log/secure)"
+        echo " 1) Ver accesos SSH (Aceptados y Fallidos)"
+        echo " 2) Ver inicios y cierres de sesión"
+        echo " 3) Ver comandos ejecutados con sudo"
+        echo " 4) Monitoreo SSH en vivo (journalctl -u sshd)"
+        echo " 5) Buscar patrón con grep en /var/log/secure"
+        echo " 6) Ver /var/log/secure completo con less"
+        echo " 0) Volver al menú principal"
+        echo "==================================================================="
+        read -r -p "Seleccione una opción: " opcion
+
+        case "$opcion" in
+            1) ver_accesos_ssh ;;
+            2) ver_inicios_sesion ;;
+            3) ver_comandos_sudo ;;
+            4) ver_journal_ssh ;;
+            5) buscar_patron_grep ;;
+            6) ver_log_completo ;;
+            0) break ;;
+            *) mensaje_error "Opción no válida"; pausa ;;
         esac
     done
 }

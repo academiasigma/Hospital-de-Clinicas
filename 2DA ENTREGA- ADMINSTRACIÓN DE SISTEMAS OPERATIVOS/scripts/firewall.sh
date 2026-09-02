@@ -1,112 +1,151 @@
 #!/bin/bash
+#Módulo de Firewalld
 
-verReglas() {
-    echo ""
-    echo "--- ESTADO DE FIREWALLD ---"
+ver_reglas_firewall() {
+    titulo "ESTADO DE FIREWALLD"
+    echo "--- Zonas Activas ---"
     firewall-cmd --get-active-zones
     echo ""
+    echo "--- Reglas de la Zona por Defecto ---"
     firewall-cmd --list-all
-    read -p "Presione ENTER para continuar."
+    echo ""
+    pausa
 }
 
-gestionarPuertos() {
-    echo ""
+gestionar_puertos() {
+    requiere_root || return 1
+    local puerto=""
+    local accion=""
+    local tipo=""
+    local mod_perm=""
+    local flag_cmd=""
+
     echo "--- GESTIÓN DE PUERTOS ---"
-    read -p "Ingrese puerto y protocolo (ej: 8080/tcp o 3306/tcp): " puerto
-    read -p "¿Desea (A)brir o (C)errar el puerto? (a/c): " accion
-    read -p "¿Aplicar de forma (P)ermanente o (T)emporal? (p/t): " tipo
-    
-    flag=""
-    if [ "$tipo" = "p" ] || [ "$tipo" = "P" ]; then
-        flag="--permanent"
+    read -r -p "Ingrese puerto y protocolo (ej: 8080/tcp): " puerto
+    if [ -z "$puerto" ]; then
+        mensaje_error "El puerto no puede estar vacío."
+        pausa
+        return 1
     fi
-    
-    if [ "$accion" = "a" ] || [ "$accion" = "A" ]; then
-        firewall-cmd $flag --add-port="$puerto"
-        echo "Puerto habilitado."
+
+    read -r -p "¿Desea (A)brir o (C)errar el puerto? (a/c): " accion
+    read -r -p "¿Aplicar de forma (P)ermanente o (T)emporal? (p/t): " tipo
+
+    [ "$tipo" = "p" ] || [ "$tipo" = "P" ] && mod_perm="--permanent"
+
+    case "$accion" in
+        a|A) flag_cmd="--add-port=$puerto" ;;
+        c|C) flag_cmd="--remove-port=$puerto" ;;
+        *)
+            mensaje_error "Acción no válida."
+            pausa
+            return 1
+            ;;
+    esac
+
+    firewall-cmd $mod_perm "$flag_cmd" &>/dev/null
+    if [ $? -eq 0 ]; then
+        [ -n "$mod_perm" ] && firewall-cmd --reload &>/dev/null
+        mensaje_ok "Regla sobre el puerto '$puerto' aplicada correctamente."
     else
-        firewall-cmd $flag --remove-port="$puerto"
-        echo "Puerto deshabilitado."
+        mensaje_error "No se pudo aplicar la regla para el puerto '$puerto'."
     fi
-    
-    if [ -n "$flag" ]; then
-        firewall-cmd --reload
-    fi
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-bloquearIp() {
-    echo ""
-    echo "--- BLOQUEAR / PERMITIR IP O RED ---"
-    read -p "Ingrese la IP o Red (ej: 192.168.1.50): " ipDestino
-    read -p "¿Desea (B)loquear o (P)ermitir? (b/p): " accionIp
-    read -p "¿Aplicar de forma (P)ermanente o (T)emporal? (p/t): " tipo
-    
-    flag=""
-    if [ "$tipo" = "p" ] || [ "$tipo" = "P" ]; then
-        flag="--permanent"
+bloquear_ip() {
+    requiere_root || return 1
+    local ip=""
+    local accion=""
+    local tipo=""
+    local mod_perm=""
+    local regla=""
+
+    echo "--- FILTRADO POR IP O SUBRED ---"
+    read -r -p "Ingrese la IP o Red (ej: 192.168.1.50): " ip
+    if [ -z "$ip" ]; then
+        mensaje_error "Debe indicar una dirección IP o subred válida."
+        pausa
+        return 1
     fi
-    
-    if [ "$accionIp" = "b" ] || [ "$accionIp" = "B" ]; then
-        firewall-cmd $flag --add-rich-rule="rule family=\"ipv4\" source address=\"$ipDestino\" drop"
-        echo "IP bloqueada."
+
+    read -r -p "¿Desea (B)loquear (drop) o (P)ermitir (accept)? (b/p): " accion
+    read -r -p "¿Aplicar de forma (P)ermanente o (T)emporal? (p/t): " tipo
+
+    [ "$tipo" = "p" ] || [ "$tipo" = "P" ] && mod_perm="--permanent"
+
+    case "$accion" in
+        b|B) regla="rule family=\"ipv4\" source address=\"$ip\" drop" ;;
+        p|P) regla="rule family=\"ipv4\" source address=\"$ip\" accept" ;;
+        *)
+            mensaje_error "Acción no válida."
+            pausa
+            return 1
+            ;;
+    esac
+
+    firewall-cmd $mod_perm --add-rich-rule="$regla" &>/dev/null
+    if [ $? -eq 0 ]; then
+        [ -n "$mod_perm" ] && firewall-cmd --reload &>/dev/null
+        mensaje_ok "Regla para la dirección IP '$ip' establecida exitosamente."
     else
-        firewall-cmd $flag --add-rich-rule="rule family=\"ipv4\" source address=\"$ipDestino\" accept"
-        echo "IP permitida."
+        mensaje_error "No se pudo aplicar la regla para la IP '$ip'."
     fi
-    
-    if [ -n "$flag" ]; then
-        firewall-cmd --reload
-    fi
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-reglaCombinada() {
-    echo ""
+regla_combinada() {
+    requiere_root || return 1
+    local ip=""
+    local puerto=""
+    local proto=""
+    local accion=""
+    local tipo=""
+    local mod_perm=""
+    local regla=""
+
     echo "--- REGLA COMBINADA (IP A UN PUERTO ESPECÍFICO) ---"
-    read -p "Ingrese la IP de origen (ej: 192.168.1.50): " ipOrigen
-    read -p "Ingrese el puerto (ej: 3306): " puertoDestino
-    read -p "Protocolo (tcp/udp) [tcp]: " proto
+    read -r -p "Ingrese IP de origen (ej: 192.168.1.50): " ip
+    read -r -p "Ingrese puerto destino (ej: 3306): " puerto
+    read -r -p "Protocolo (tcp/udp) [tcp]: " proto
     proto=${proto:-tcp}
-    read -p "Acción (accept/drop) [accept]: " accionRegla
-    accionRegla=${accionRegla:-accept}
-    read -p "¿Aplicar de forma (P)ermanente o (T)emporal? (p/t): " tipo
-    
-    flag=""
-    if [ "$tipo" = "p" ] || [ "$tipo" = "P" ]; then
-        flag="--permanent"
+    read -r -p "Acción (accept/drop/reject) [accept]: " accion
+    accion=${accion:-accept}
+    read -r -p "¿Aplicar de forma (P)ermanente o (T)emporal? (p/t): " tipo
+
+    [ "$tipo" = "p" ] || [ "$tipo" = "P" ] && mod_perm="--permanent"
+
+    regla="rule family=\"ipv4\" source address=\"$ip\" port port=\"$puerto\" protocol=\"$proto\" $accion"
+
+    firewall-cmd $mod_perm --add-rich-rule="$regla" &>/dev/null
+    if [ $? -eq 0 ]; then
+        [ -n "$mod_perm" ] && firewall-cmd --reload &>/dev/null
+        mensaje_ok "Regla combinada aplicada exitosamente."
+    else
+        mensaje_error "Error al aplicar la regla combinada en Firewalld."
     fi
-    
-    firewall-cmd $flag --add-rich-rule="rule family=\"ipv4\" source address=\"$ipOrigen\" port port=\"$puertoDestino\" protocol=\"$proto\" $accionRegla"
-    
-    if [ -n "$flag" ]; then
-        firewall-cmd --reload
-    fi
-    echo "Regla combinada aplicada correctamente."
-    read -p "Presione ENTER para continuar."
+    pausa
 }
 
-menuFirewall() {
-    opcFw=99
-    while [ "$opcFw" -ne 0 ]; do
-        clear
-        echo "============================================="
-        echo "       S.I.G.S.M. - CORTAFUEGOS FIREWALLD    "
-        echo "============================================="
-        echo "1) Ver zona activa y reglas vigentes"
-        echo "2) Bloquear / Desbloquear puertos"
-        echo "3) Bloquear / Desbloquear IP o Red"
-        echo "4) Regla combinada (IP a puerto específico)"
-        echo "0) Volver al menú principal"
-        echo "============================================="
-        read -p "Seleccione una opción: " opcFw
-        case $opcFw in
-            1) verReglas ;;
-            2) gestionarPuertos ;;
-            3) bloquearIp ;;
-            4) reglaCombinada ;;
-            0) echo "Volviendo..." ;;
-            *) echo "Opción no válida." ;;
+menu_firewall() {
+    local opcion=""
+    while [ "$opcion" != "0" ]; do
+        titulo "S.I.G.S.M. - CORTAFUEGOS (FIREWALLD)"
+        echo " 1) Ver zona activa y reglas vigentes"
+        echo " 2) Abrir / Cerrar puertos"
+        echo " 3) Bloquear / Permitir IP o Red"
+        echo " 4) Regla combinada (IP a puerto específico)"
+        echo " 0) Volver al menú principal"
+        echo "==================================================================="
+        read -r -p "Seleccione una opción: " opcion
+
+        case "$opcion" in
+            1) ver_reglas_firewall ;;
+            2) gestionar_puertos ;;
+            3) bloquear_ip ;;
+            4) regla_combinada ;;
+            0) break ;;
+            *) mensaje_error "Opción no válida"; pausa ;;
         esac
     done
 }
