@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Portal del Paciente</title>
+    <link rel="stylesheet" href="../css/style-portal.css">
+</head>
+<body>
+    <header class="patient-header">
+        <div class="header-inner" style="position: relative;"> 
+            <!-- Botón para volver al login de funcionarios -->
+            <a href="../index.html" class="btn-back-login">
+                &larr; Volver al Acceso
+            </a>
+
+            <div class="portal-logo-container">
+                <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="portal-logo">
+            </div>
+            <h1>Portal de Invitados</h1>
+            <p>Guías e Indicaciones Médicas Digitales</p>
+        </div>
+    </header>
+
+    <main class="patient-container">
+        <!-- Card informativa de bienvenida (Sin validaciones) -->
+        <section class="card verification-card">
+            <h2>Bienvenido al Portal de Pacientes</h2>
+            <p>Aquí podrá consultar, visualizar y descargar de forma libre y directa todas las guías institucionales, directivas de preparación para estudios clínicos e indicaciones médicas proporcionadas por el Hospital de Clínicas.</p>
+        </section>
+
+        <!-- Barra de Búsqueda y Filtro de Categorías -->
+        <section class="filters-card">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="inputBuscar" 
+                    placeholder="Buscar guías médicas (ej: IVE, Preparación)..."
+                    autocomplete="off"
+                >
+            </div>
+            <div class="category-tabs" id="categoryTabs">
+                <button class="tab-btn active" data-category="0">Todos</button>
+            </div>
+        </section>
+
+        <!-- Listado Dinámico de Documentos -->
+        <section class="documents-grid" id="documentsGrid">
+            <div class="loader-box">
+                <div class="spinner"></div>
+                <p>Cargando catálogo de documentos...</p>
+            </div>
+        </section>
+
+        <!-- Encuestas de Satisfacción Activas -->
+        <section class="card" id="activeSurveysSection" style="margin-top: 1.5rem;">
+            <h2 style="font-size: 1.1rem; color: #0f172a; margin-bottom: 0.35rem;">Encuestas de Satisfacción Disponibles</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Su opinión anónima nos ayuda a mejorar la calidad de atención en cada área del Hospital de Clínicas.</p>
+            <div id="activeSurveysGrid" class="documents-grid"></div>
+        </section>
+    </main>
+
+    <!-- Modal dinámico e las encuestas de satisfacción -->
+    <div id="modalEncuesta" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <div class="header-title-box">
+                    <span class="survey-badge">Encuesta de Satisfacción Anónima</span>
+                    <h3 id="surveyTitle">...</h3>
+                </div>
+                <button type="button" class="btn-close" id="btnCerrarModalEncuesta">&times;</button>
+            </header>
+            
+            <form id="formEncuesta" class="survey-form">
+                <input type="hidden" id="survey_id_encuesta">
+                
+                <!-- Acá las preguntas se inyectarán dinámicamente  -->
+                <div id="surveyQuestionsContainer" class="questions-container"></div>
+                
+                <div class="form-group text-area-group">
+                    <label for="survey_observaciones">Observaciones generales (Opcional):</label>
+                    <textarea id="survey_observaciones" rows="3" placeholder="Si lo desea, déjenos un comentario detallado sobre su experiencia..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelarEncuesta">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnEnviarEncuesta">Enviar Respuestas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="patient-footer">
+        <p>Sistema Informático de Gestión de Servicios Médicos (S.I.G.S.M.)</p>
+        <p>Hospital de Clínicas Dr. Manuel Quintela | Montevideo, Uruguay</p>
+        <p style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="../js/portal-invitados.js"></script>
+</body>
+</html>

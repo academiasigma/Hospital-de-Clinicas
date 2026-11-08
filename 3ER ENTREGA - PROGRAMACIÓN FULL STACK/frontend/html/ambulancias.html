@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Control de Traslados</title>
+    <link rel="stylesheet" href="../css/style-documentos.css">
+    <link rel="stylesheet" href="../css/style-ambulancias.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="header-logo">
+        </div>
+        <div class="user-info">
+            <span id="txtNombre">Cargando...</span>
+            <span id="txtRol" class="badge-rol">...</span>
+            <a href="ambulancias-recursos.html" id="lnkRecursos" class="btn-nav oculta">Choferes / Enfermeros / Flota</a>
+            <a href="panel.html" class="btn-nav">Volver al Panel</a>
+            <button id="btnCerrarSesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-icon-container"><img src="../img/stat-total.svg" class="stat-svg-icon" alt="Total"></div>
+                <div class="stat-desc"><h3 id="statTotalVal">0</h3><p>Traslados Totales</p></div>
+            </div>
+            <div class="stat-card stat-pending">
+                <div class="stat-icon-container"><img src="../img/stat-pending.svg" class="stat-svg-icon" alt="Pendientes"></div>
+                <div class="stat-desc"><h3 id="statPendientesVal">0</h3><p>Pendientes</p></div>
+            </div>
+            <div class="stat-card stat-progress">
+                <div class="stat-icon-container"><img src="../img/stat-progress.svg" class="stat-svg-icon" alt="En Curso"></div>
+                <div class="stat-desc"><h3 id="statEnCursoVal">0</h3><p>En Curso / Retornando</p></div>
+            </div>
+            <div class="stat-card stat-completed">
+                <div class="stat-icon-container"><img src="../img/stat-completed.svg" class="stat-svg-icon" alt="Finalizados"></div>
+                <div class="stat-desc"><h3 id="statCompletadosVal">0</h3><p>Finalizados</p></div>
+            </div>
+        </section>
+
+        <div class="ambulancias-grid">
+            <!-- Columna izquierda: historial / seguimiento -->
+            <section class="list-card">
+                <div class="list-header">
+                    <h3>Historial y Seguimiento de Traslados</h3>
+                    <div class="list-actions">
+                        <a href="ambulancias-chofer.html" target="_blank" class="btn-action-highlight oculta" id="lnkChofer">Abrir Terminal de Chofer</a>
+                    </div>
+                </div>
+
+                <form id="formFiltros" class="filtros-traslados" style="display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.75rem 1rem;">
+                    <input type="text" id="filtroDocumento" placeholder="C.I. del paciente" inputmode="numeric" maxlength="12" style="flex:1 1 130px;">
+                    <select id="filtroVehiculo" style="flex:1 1 130px;"><option value="">Todos los vehículos</option></select>
+                    <select id="filtroEstado" style="flex:1 1 120px;">
+                        <option value="">Todos los estados</option>
+                        <option>Pendiente</option><option>En Curso</option><option>Retornando</option>
+                        <option>Finalizado</option><option>Cancelado</option>
+                    </select>
+                    <input type="date" id="filtroDesde" title="Desde" style="flex:1 1 130px;">
+                    <input type="date" id="filtroHasta" title="Hasta" style="flex:1 1 130px;">
+                    <button type="submit" class="btn-primary btn-small">Filtrar</button>
+                    <button type="button" id="btnLimpiarFiltros" class="btn-secondary btn-small">Limpiar</button>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Paciente / Objeto</th>
+                                <th>Origen &rarr; Destino</th>
+                                <th>Recursos Asignados</th>
+                                <th>Horarios</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaTrasladosCuerpo"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Columna derecha: alta / edición -->
+            <section class="form-card" id="seccionFormulario">
+                <h3 id="tituloFormulario">Nuevo Traslado</h3>
+                <p class="form-subtitle" id="subtituloFormulario">Datos del traslado, origen, destino y horarios.</p>
+
+                <form id="formAltaTraslado" class="styled-form" novalidate>
+                    <div class="form-group">
+                        <label for="tipo_traslado">Tipo de Traslado *</label>
+                        <select id="tipo_traslado" required>
+                            <option value="paciente">Paciente Clínico</option>
+                            <option value="objeto">Órgano / Material / Insumo</option>
+                        </select>
+                    </div>
+
+                    <div id="grupo_paciente">
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="pac_documento">C.I. del paciente *</label>
+                                <input type="text" id="pac_documento" inputmode="numeric" maxlength="12" placeholder="Sin puntos ni guiones">
+                            </div>
+                            <div class="form-group">
+                                <label for="pac_nombre">Nombre completo *</label>
+                                <input type="text" id="pac_nombre" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="pac_nacimiento">Fecha de nacimiento *</label>
+                                <input type="date" id="pac_nacimiento">
+                            </div>
+                            <div class="form-group">
+                                <label for="pac_telefono">Teléfono</label>
+                                <input type="text" id="pac_telefono" maxlength="20">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Condiciones clínicas y traslado del paciente</label>
+                            <div class="condiciones-grid-2x2">
+                                <label class="condicion-chip"><input type="checkbox" id="pac_medios" checked><span>Se maneja por sus medios</span></label>
+                                <label class="condicion-chip"><input type="checkbox" id="pac_oxigeno"><span>Requiere oxígeno</span></label>
+                                <label class="condicion-chip"><input type="checkbox" id="pac_camilla"><span>Requiere camilla</span></label>
+                                <label class="condicion-chip"><input type="checkbox" id="pac_aislamiento"><span>Requiere aislamiento</span></label>
+                            </div>
+                            <small id="pacienteAviso" style="display:block; color:#64748b; margin-top:0.35rem;">Si la C.I. ya existe, se cargan sus datos automáticamente.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group oculta" id="grupo_objeto">
+                        <label for="objeto">Órgano / Material *</label>
+                        <select id="objeto"><option value="">Seleccione material</option></select>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="fecha">Fecha *</label>
+                            <input type="date" id="fecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hora_salida">Hora de salida *</label>
+                            <input type="time" id="hora_salida" required>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="hora_estimada_llegada">Llegada estimada *</label>
+                            <input type="time" id="hora_estimada_llegada" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="limite_horario" id="lblLimite">Límite de horario</label>
+                            <input type="time" id="limite_horario">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="sector_origen">Sector de origen *</label>
+                            <input type="text" id="sector_origen" maxlength="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="piso_origen">Piso *</label>
+                            <input type="text" id="piso_origen" maxlength="20" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="habitacion_origen">Habitación de origen</label>
+                        <input type="text" id="habitacion_origen" maxlength="20">
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="sector_destino">Sector de destino *</label>
+                            <input type="text" id="sector_destino" maxlength="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="piso_destino">Piso *</label>
+                            <input type="text" id="piso_destino" maxlength="20" required>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="habitacion_destino">Habitación de destino</label>
+                            <input type="text" id="habitacion_destino" maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="direccion_destino">Dirección de destino *</label>
+                            <input type="text" id="direccion_destino" maxlength="200" required placeholder="Zona metropolitana">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="division_solicitante">División solicitante *</label>
+                        <input type="text" id="division_solicitante" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="motivo_procedimiento">Motivo / procedimiento *</label>
+                        <input type="text" id="motivo_procedimiento" maxlength="200" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsable_recepcion">Quién lo recibe *</label>
+                        <input type="text" id="responsable_recepcion" maxlength="100" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prioridad">Nivel de Prioridad *</label>
+                        <select id="prioridad" required>
+                            <option value="Baja">Baja (Traslado Común)</option>
+                            <option value="Media" selected>Media (Monitoreo Clínico)</option>
+                            <option value="Alta">Alta (Urgencia Médica)</option>
+                        </select>
+                    </div>
+
+                    <!-- Asignación de recursos: solo el área de transporte -->
+                    <div id="grupoRecursos">
+                        <div class="form-group">
+                            <label for="vehiculo">Vehículo</label>
+                            <select id="vehiculo"><option value="">Sin asignar</option></select>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="chofer">Chofer</label>
+                                <select id="chofer"><option value="">Sin asignar</option></select>
+                            </div>
+                            <div class="form-group" id="grupo_enfermero">
+                                <label for="enfermero">Enfermero acompañante</label>
+                                <select id="enfermero"><option value="">Sin asignar / no requiere</option></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones</label>
+                        <textarea id="observaciones" rows="2" maxlength="500"></textarea>
+                    </div>
+
+                    <div id="msgFormulario" role="alert" style="color:#b91c1c; font-size:0.85rem; margin-bottom:0.5rem;"></div>
+
+                    <button type="submit" id="btnGuardar" class="btn-primary w-100">Registrar Traslado</button>
+                    <button type="button" id="btnCancelarEdicion" class="btn-secondary w-100 oculta" style="margin-top:0.5rem;">Cancelar edición</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/ambulancias.js"></script>
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

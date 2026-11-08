@@ -1,0 +1,262 @@
+
+-- La base sigsm_hospital la crea el contenedor MariaDB (MYSQL_DATABASE) con el usuario sigsm_app.
+USE sigsm_hospital;
+
+-- SECCIÓN 1: TABLAS MAESTRAS Y LAS INDEPENDIENTES
+
+CREATE TABLE usuario (
+    id_usuario INT AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    contrasenia VARCHAR(255) NOT NULL,
+    rol ENUM('SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION') NOT NULL,
+    estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+    CONSTRAINT CP_usuario PRIMARY KEY (id_usuario),
+    CONSTRAINT CS_usuario_email UNIQUE (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE chofer (
+    id_chofer INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    licencia VARCHAR(50) NOT NULL,
+    CONSTRAINT CP_chofer PRIMARY KEY (id_chofer),
+    CONSTRAINT CS_chofer_licencia UNIQUE (licencia)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE enfermero (
+    id_enfermero INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    matricula_profesional VARCHAR(50) NOT NULL,
+    CONSTRAINT CP_enfermero PRIMARY KEY (id_enfermero),
+    CONSTRAINT CS_enfermero_matricula UNIQUE (matricula_profesional)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE vehiculo (
+    id_vehiculo INT AUTO_INCREMENT,
+    tipo_vehiculo ENUM('Ambulancia', 'Auto') NOT NULL,
+    matricula VARCHAR(20) NOT NULL,
+    estado ENUM('Disponible', 'En Traslado', 'Mantenimiento', 'Fuera de Servicio') NOT NULL,
+    CONSTRAINT CP_vehiculo PRIMARY KEY (id_vehiculo),
+    CONSTRAINT CS_vehiculo_matricula UNIQUE (matricula)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE paciente (
+    id_paciente INT AUTO_INCREMENT,
+    documento VARCHAR(20) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20),
+    fecha_de_nacimiento DATE NOT NULL,
+    requiere_oxigeno TINYINT(1) DEFAULT 0,
+    requiere_camilla TINYINT(1) DEFAULT 0,
+    requiere_aislamiento TINYINT(1) DEFAULT 0,
+    se_maneja_por_sus_medios TINYINT(1) DEFAULT 1,
+    CONSTRAINT CP_paciente PRIMARY KEY (id_paciente),
+    CONSTRAINT CS_paciente_documento UNIQUE (documento)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE objeto (
+    id_objeto INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    caracteristicas TEXT,
+    tipo_objeto ENUM('organo', 'muestra_biologica', 'insumo_medico', 'documento', 'equipamiento') NOT NULL,
+    CONSTRAINT CP_objeto PRIMARY KEY (id_objeto)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE categoria (
+    id_categoria INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT CP_categoria PRIMARY KEY (id_categoria),
+    CONSTRAINT CS_categoria_nombre UNIQUE (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- SECCIÓN 2: ENTIDADES TRANSACCIONALES Y DE SOPORTE OPERATIVO
+
+CREATE TABLE documento (
+    id_documento INT AUTO_INCREMENT,
+    titulo VARCHAR(150) NOT NULL,
+    archivo VARCHAR(255) NOT NULL,
+    id_usuario INT NOT NULL,
+    id_categoria INT NOT NULL,
+    CONSTRAINT CP_documento PRIMARY KEY (id_documento),
+    CONSTRAINT CE_documento_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_documento_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE encuesta (
+    id_encuesta INT AUTO_INCREMENT,
+    comentarios TEXT,
+    estado ENUM('Borrador', 'Activa', 'Cerrada') NOT NULL DEFAULT 'Borrador',
+    id_categoria INT NOT NULL,
+    CONSTRAINT CP_encuesta PRIMARY KEY (id_encuesta),
+    CONSTRAINT CE_encuesta_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE pregunta (
+    id_pregunta INT AUTO_INCREMENT,
+    enunciado TEXT NOT NULL,
+    tipo ENUM('Si/No', 'Texto Libre', 'Escala_1_5', 'Opcion_Multiple') NOT NULL,
+    id_encuesta INT NOT NULL,
+    CONSTRAINT CP_pregunta PRIMARY KEY (id_pregunta),
+    CONSTRAINT CE_pregunta_encuesta FOREIGN KEY (id_encuesta) REFERENCES encuesta(id_encuesta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE opcion_pregunta (
+    id_opcion INT AUTO_INCREMENT,
+    texto_opcion VARCHAR(255) NOT NULL,
+    id_pregunta INT NOT NULL,
+    CONSTRAINT CP_opcion_pregunta PRIMARY KEY (id_opcion),
+    CONSTRAINT CE_opcion_pregunta_pregunta FOREIGN KEY (id_pregunta) REFERENCES pregunta(id_pregunta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE resolucion_encuesta (
+    id_resolucion INT AUTO_INCREMENT,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    observaciones TEXT,
+    id_encuesta INT NOT NULL,
+    CONSTRAINT CP_resolucion_encuesta PRIMARY KEY (id_resolucion),
+    CONSTRAINT CE_resolucion_encuesta_encuesta FOREIGN KEY (id_encuesta) REFERENCES encuesta(id_encuesta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE respuesta (
+    id_respuesta INT AUTO_INCREMENT,
+    contenido_respuesta TEXT NOT NULL,
+    id_resolucion INT NOT NULL,
+    id_pregunta INT NOT NULL,
+    CONSTRAINT CP_respuesta PRIMARY KEY (id_respuesta),
+    CONSTRAINT CE_respuesta_resolucion FOREIGN KEY (id_resolucion) REFERENCES resolucion_encuesta(id_resolucion) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT CE_respuesta_pregunta FOREIGN KEY (id_pregunta) REFERENCES pregunta(id_pregunta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE traslado (
+    id_traslado INT AUTO_INCREMENT,
+    fecha DATE NOT NULL,
+    hora_salida TIME NOT NULL,
+    hora_estimada_llegada TIME NOT NULL,
+    hora_efectiva_llegada TIME,
+    hora_retorno TIME,
+    sector_origen VARCHAR(100) NOT NULL,
+    piso_origen VARCHAR(20) NOT NULL,
+    habitacion_origen VARCHAR(20),
+    sector_destino VARCHAR(100) NOT NULL,
+    piso_destino VARCHAR(20) NOT NULL,
+    habitacion_destino VARCHAR(20),
+    direccion_destino VARCHAR(200) NOT NULL,
+    estado ENUM('Pendiente', 'En Curso', 'Retornando', 'Finalizado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
+    prioridad ENUM('Alta', 'Media', 'Baja') NOT NULL DEFAULT 'Media',
+    observaciones TEXT,
+    division_solicitante VARCHAR(100) NOT NULL,
+    motivo_procedimiento VARCHAR(200) NOT NULL,
+    responsable_recepcion VARCHAR(100) NOT NULL,
+    limite_horario TIME,
+    id_vehiculo INT,
+    id_chofer INT,
+    id_usuario INT NOT NULL,
+    id_enfermero INT,
+    id_paciente INT,
+    id_objeto INT,
+    CONSTRAINT CP_traslado PRIMARY KEY (id_traslado),
+    CONSTRAINT CE_traslado_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES vehiculo(id_vehiculo) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_chofer FOREIGN KEY (id_chofer) REFERENCES chofer(id_chofer) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_enfermero FOREIGN KEY (id_enfermero) REFERENCES enfermero(id_enfermero) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_paciente FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_objeto FOREIGN KEY (id_objeto) REFERENCES objeto(id_objeto) ON DELETE RESTRICT ON UPDATE CASCADE,
+    -- RNE03 (paciente u objeto, nunca ambos) se valida en la capa de negocio (Traslado.php): MariaDB no permite CHECK sobre columnas con FK ON UPDATE CASCADE.
+    -- RNE01: coherencia cronologica hora_salida < hora_efectiva_llegada <= hora_retorno
+    CONSTRAINT CK_traslado_cronologia CHECK (hora_estimada_llegada > hora_salida AND (hora_efectiva_llegada IS NULL OR hora_efectiva_llegada > hora_salida) AND (hora_retorno IS NULL OR hora_efectiva_llegada IS NULL OR hora_retorno >= hora_efectiva_llegada))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- SECCIÓN 3: SCRIPT DML (los datos de Prueba Iniciales)
+
+-- insert de los usuarios iniciales con los roles del sistema
+-- Clave de prueba: "password" encriptada con password_hash
+INSERT INTO usuario (email, nombre, contrasenia, rol, estado) VALUES 
+('superadmin@hc.edu.uy', 'SuperAdmin IT', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo'),
+('gestor@hc.edu.uy', 'Gestor Integral', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'GESTOR_INTEGRAL', 'Activo'),
+('director@hc.edu.uy', 'Director General', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'DIRECTOR_GENERAL', 'Activo'),
+('division@hc.edu.uy', 'Usuario Division', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'USUARIO_DIVISION', 'Activo');
+
+-- Insert de categorías médicas
+INSERT INTO categoria (nombre) VALUES 
+('Indicaciones Médicas y Quirúrgicas'),
+('Preparación para Estudios'),
+('Enfermería y Trasplantes'),
+('Encuestas de Satisfacción'),
+('Protocolos de Prevención');
+
+-- Recursos de prueba
+INSERT INTO chofer (nombre, telefono, licencia) VALUES 
+('Carlos Rodríguez', '099123456', 'LIC-CH-001'),
+('Mario Gómez', '098765432', 'LIC-CH-002'),
+('Juan Pérez', '097111222', 'LIC-CH-003'),
+('Marcelo Silva', '096333444', 'LIC-CH-004'),
+('Santiago Pereira', '095555666', 'LIC-CH-005'),
+('Jorge González', '094777888', 'LIC-CH-006'),
+('Alejandro Rodríguez', '093999000', 'LIC-CH-007'),
+('Néstor Cabrera', '092111333', 'LIC-CH-008');
+
+INSERT INTO enfermero (nombre, telefono, matricula_profesional) VALUES 
+('Ana Martínez', '091112233', 'ENF-MAT-101');
+
+INSERT INTO vehiculo (tipo_vehiculo, matricula, estado) VALUES 
+('Ambulancia', 'SCA-1001', 'Disponible'),
+('Auto', 'SCA-2002', 'Disponible');
+
+-- Pacientes de prueba (algunas cédulas para pruebas)
+INSERT INTO paciente (documento, nombre, telefono, fecha_de_nacimiento, requiere_oxigeno, requiere_camilla, requiere_aislamiento, se_maneja_por_sus_medios) VALUES 
+('57327104', 'Facundo Guedikian', '099111222', '1995-01-01', 0, 0, 0, 1),
+('57915575', 'Ihojan Robaina', '099222333', '1996-02-02', 0, 0, 0, 1),
+('57516640', 'Ezequiel Gomez', '099333444', '1997-03-03', 0, 0, 0, 1),
+('57700578', 'Nicolas Chaitelle', '099444555', '1998-04-04', 0, 0, 0, 1);
+
+-- Objetos de prueba (Módulo de Traslados y ambulancias)
+INSERT INTO objeto (nombre, caracteristicas, tipo_objeto) VALUES 
+('Órgano: Corazón para Trasplante', 'Caja térmica refrigerada, transporte urgente, prioridad alta', 'organo'),
+('Muestra Biológica: Biopsia urgente', 'Tubo refrigerado para laboratorio de patología', 'muestra_biologica'),
+('Insumos: Medicamentos Oncológicos', 'Caja sellada para farmacia, mantener en temperatura fresca', 'insumo_medico');
+
+-- Documentos clínicos iniciales
+INSERT INTO documento (titulo, archivo, id_usuario, id_categoria) VALUES 
+('Indicaciones de interrupción voluntaria del embarazo', 'uploads/documentos/ive_indicaciones.pdf', 1, 1),
+('Preparación para ecocardiograma transesofágico', 'uploads/documentos/ecocardiograma_prep.pdf', 1, 2),
+('Plan de alta de enfermería en Nefrología', 'uploads/documentos/nefrologia_alta.pdf', 1, 3);
+
+-- Encuestas activas de prueba (Módulo de Satisfacción del Paciente)
+INSERT INTO encuesta (id_encuesta, comentarios, estado, id_categoria) VALUES 
+(1, 'Encuesta del Área Ginecología/IVE', 'Activa', 1),
+(2, 'Encuesta del Área Estudios Imagenológicos', 'Activa', 2),
+(3, 'Encuesta del Área Enfermería y Trasplantes', 'Activa', 3);
+
+-- PREGUNTAS ASOCIADAS A LA ENCUESTA 1 (Categoría 1)
+INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
+(1, '¿La información provista en la guía clínica fue clara y fácil de entender?', 'Si/No', 1),
+(2, 'Califique la calidad de la atención médica recibida durante su consulta:', 'Escala_1_5', 1),
+(3, 'Sugerencias o comentarios adicionales para mejorar este instructivo:', 'Texto Libre', 1);
+
+-- PREGUNTAS ASOCIADAS A LA ENCUESTA 2 (Categoría 2)
+INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
+(4, '¿Le resultó sencillo seguir las indicaciones de ayuno y preparación para su estudio?', 'Si/No', 2),
+(5, 'Califique la amabilidad y el respeto mostrado por el personal técnico:', 'Escala_1_5', 2),
+(6, 'Deje sus comentarios sobre su experiencia general de preparación:', 'Texto Libre', 2);
+
+-- PREGUNTAS ASOCIADAS A LA ENCUESTA 3 ( Categoría 3)
+INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
+(7, '¿La explicación de los cuidados post-alta domiciliaria por parte del enfermero fue clara?', 'Si/No', 3),
+(8, 'Califique la preparación técnica y el trato brindado por el personal de enfermería:', 'Escala_1_5', 3),
+(9, 'Escriba aquí sus observaciones o sugerencias para mejorar el plan de alta:', 'Texto Libre', 3);
+
+-- SECCION 4: USUARIOS DE BASE DE DATOS CON DISTINTOS PRIVILEGIOS
+-- sigsm_app (usuario de aplicacion) lo crea el contenedor; se restringe a operaciones DML.
+-- El entrypoint de la imagen concede ALL sobre el patron `sigsm\_hospital`; se quita y se concede solo DML.
+REVOKE ALL PRIVILEGES ON `sigsm\_hospital`.* FROM 'sigsm_app'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON sigsm_hospital.* TO 'sigsm_app'@'%';
+-- sigsm_admin (administrador del sistema): control total sobre la base.
+CREATE USER IF NOT EXISTS 'sigsm_admin'@'%' IDENTIFIED BY 'Hc1234_admin';
+GRANT ALL PRIVILEGES ON sigsm_hospital.* TO 'sigsm_admin'@'%';
+FLUSH PRIVILEGES;

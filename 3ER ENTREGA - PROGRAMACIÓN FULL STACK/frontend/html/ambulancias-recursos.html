@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Choferes, Enfermeros y Flota</title>
+    <link rel="stylesheet" href="../css/style-documentos.css">
+    <link rel="stylesheet" href="../css/style-ambulancias.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="header-logo">
+        </div>
+        <div class="user-info">
+            <span id="txtNombre">Cargando...</span>
+            <span id="txtRol" class="badge-rol">...</span>
+            <a href="ambulancias.html" class="btn-nav">Volver a Traslados</a>
+            <button id="btnCerrarSesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <button class="btn-primary btn-small tab-recurso" data-recurso="choferes">Choferes</button>
+            <button class="btn-secondary btn-small tab-recurso" data-recurso="enfermeros">Enfermeros</button>
+            <button class="btn-secondary btn-small tab-recurso" data-recurso="vehiculos">Vehículos</button>
+        </div>
+
+        <div class="ambulancias-grid">
+            <section class="list-card">
+                <div class="list-header"><h3 id="tituloLista">Choferes</h3></div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr id="encabezadoTabla"></tr></thead>
+                        <tbody id="cuerpoTabla"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="form-card">
+                <h3 id="tituloForm">Nuevo chofer</h3>
+                <form id="formRecurso" class="styled-form" novalidate>
+                    <div id="camposForm"></div>
+                    <div id="msgRecurso" role="alert" style="color:#b91c1c; font-size:0.85rem; margin-bottom:0.5rem;"></div>
+                    <button type="submit" id="btnGuardarRecurso" class="btn-primary w-100">Guardar</button>
+                    <button type="button" id="btnCancelarRecurso" class="btn-secondary w-100 oculta" style="margin-top:0.5rem;">Cancelar edición</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/ambulancias-recursos.js"></script>
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

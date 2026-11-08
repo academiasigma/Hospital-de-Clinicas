@@ -1,0 +1,16 @@
+# Sin esto Apache redirige (301) /api/recurso a /api/recurso/ y los POST/PUT/DELETE se pierden.
+DirectorySlash Off
+Options -Indexes
+RewriteEngine On
+
+# URLs REST limpias de todos los módulos:
+#   /api/documentos            -> api/documentos/index.php
+#   /api/documentos/5          -> api/documentos/index.php?id=5
+#   /api/categorias/2          -> api/categorias/index.php?id=2
+#   /api/encuestas/resultados  -> api/encuestas/index.php?accion=resultados
+#   /api/usuarios/3            -> api/usuarios/index.php?id=3
+#   /api/traslados/5/estado    -> api/traslados/index.php?id=5&accion=estado
+# El método HTTP (GET, POST, PUT, DELETE) lo resuelve cada index.php.
+RewriteRule ^api/documentos/publicos(?:\.php)?/?$ api/documentos/publicos.php [L,QSA]
+RewriteRule ^api/encuestas/resultados/?$ api/encuestas/index.php?accion=resultados [L,QSA]
+RewriteRule ^api/(traslados|choferes|enfermeros|vehiculos|pacientes|objetos|documentos|categorias|encuestas|usuarios)(?:/([0-9]+))?(?:/(estado|resultados))?/?$ api/$1/index.php?id=$2&accion=$3 [L,QSA]

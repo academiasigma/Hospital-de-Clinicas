@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.G.S.M. - Gestión de Documentación</title>
+    <link rel="stylesheet" href="../css/style-documentos.css">
+    <style>
+        .tabs-modulo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .tab-modulo-btn {
+            background-color: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 0.55rem 1.1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-modulo-btn.active {
+            background-color: #006699;
+            color: #ffffff;
+            border-color: #006699;
+        }
+        .seccion-oculta {
+            display: none !important;
+        }
+        .encuesta-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .encuesta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .pregunta-resultado {
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .pregunta-resultado:last-child {
+            border-bottom: none;
+        }
+        .barra-progreso {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 0.35rem;
+        }
+        .barra-progreso > div {
+            background: #0284c7;
+            height: 100%;
+        }
+        .lista-textos {
+            list-style: disc;
+            padding-left: 1.25rem;
+            margin-top: 0.35rem;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <img src="../img/HospitalDeClinicasWhite.png" alt="Hospital de Clínicas Logo" class="header-logo">
+        </div>
+        <div class="user-info">
+            <span id="txtNombre">Cargando...</span>
+            <span id="txtRol" class="badge" style="background:rgba(255,255,255,0.2); color:#fff;">...</span>
+            <a href="portal-invitados.html" target="_blank" class="btn-nav">Portal de Invitados &nearr;</a>
+            <a href="panel.html" class="btn-nav">Volver al Panel</a>
+            <button id="btnCerrarSesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Navegación interna del módulo: Documentos | Categorías | Resultados de Encuestas -->
+        <div class="tabs-modulo">
+            <button type="button" class="tab-modulo-btn active" data-vista="documentos">Documentos Clínicos</button>
+            <button type="button" class="tab-modulo-btn" data-vista="categorias" id="tabBtnCategorias">Categorías</button>
+            <button type="button" class="tab-modulo-btn" data-vista="encuestas">Encuestas y Resultados</button>
+        </div>
+
+        <div id="alerta" class="alerta oculta" role="alert"></div>
+
+        <!-- ==================== VISTA 1: DOCUMENTOS ==================== -->
+        <div id="vistaDocumentos">
+            <section class="toolbar">
+                <div class="search-filters">
+                    <input 
+                        type="text" 
+                        id="inputBuscar" 
+                        placeholder="Buscar por título de documento..."
+                        autocomplete="off"
+                    >
+                    <select id="selectFiltroCategoria">
+                        <option value="0">Todas las categorías</option>
+                    </select>
+                </div>
+                <div class="toolbar-actions">
+                    <button id="btnAbrirModalAlta" class="btn-primary">+ Nuevo Documento</button>
+                </div>
+            </section>
+
+            <section class="table-card">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Categoría</th>
+                                <th>Autor</th>
+                                <th>Archivo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCuerpo">
+                            <tr>
+                                <td colspan="6" class="text-center">Cargando documentos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== VISTA 2: CATEGORÍAS (CRUD COMPLETO) ==================== -->
+        <div id="vistaCategorias" class="seccion-oculta">
+            <section class="toolbar">
+                <div class="search-filters">
+                    <form id="formCategoria" style="display:flex; gap:0.5rem; width:100%; padding:0; align-items:center;" novalidate>
+                        <input type="hidden" id="cat_id">
+                        <input type="text" id="cat_nombre" maxlength="100" placeholder="Nombre de la nueva categoría institucional..." required>
+                        <button type="submit" id="btnGuardarCategoria" class="btn-primary">Crear Categoría</button>
+                        <button type="button" id="btnCancelarCategoria" class="btn-secondary-cancel seccion-oculta">Cancelar</button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="table-card">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre de Categoría</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCategoriasCuerpo">
+                            <tr>
+                                <td colspan="3" class="text-center">Cargando categorías...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== VISTA 3: ENCUESTAS Y RESULTADOS ==================== -->
+        <div id="vistaEncuestas" class="seccion-oculta">
+            <section class="toolbar">
+                <div class="search-filters">
+                    <select id="selectFiltroEncuestaCategoria">
+                        <option value="0">Todas las categorías con encuesta</option>
+                    </select>
+                </div>
+                <div class="toolbar-actions">
+                    <button type="button" id="btnAbrirModalNuevaEncuesta" class="btn-primary">+ Nueva Encuesta</button>
+                    <button type="button" id="btnRefrescarEncuestas" class="btn-secondary">Actualizar</button>
+                </div>
+            </section>
+
+            <div id="contenedorResultadosEncuestas">
+                <p class="text-center">Cargando resultados de satisfacción...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Crear / Editar Encuesta -->
+    <div id="modalEncuestaAdmin" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="tituloModalEncuestaAdmin">Nueva Encuesta</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalEncuestaAdmin">&times;</button>
+            </header>
+            <form id="formEncuestaAdmin" novalidate>
+                <input type="hidden" id="enc_admin_id">
+                <div class="form-group" id="grupoEncAdminCategoria">
+                    <label for="enc_admin_categoria">Categoría Institucional *</label>
+                    <select id="enc_admin_categoria" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="enc_admin_comentarios">Título / Descripción de la Encuesta *</label>
+                    <input type="text" id="enc_admin_comentarios" maxlength="200" placeholder="Ej. Encuesta del Área Cardiología" required>
+                </div>
+                <div class="form-group">
+                    <label for="enc_admin_estado">Estado de Vigencia *</label>
+                    <select id="enc_admin_estado" required>
+                        <option value="Activa">Activa (Visible en Portal de Invitados)</option>
+                        <option value="Borrador">Borrador (En preparación)</option>
+                        <option value="Cerrada">Cerrada (No admite nuevas respuestas)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-cancel" id="btnCancelarModalEncuestaAdmin">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar Encuesta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Crear / Editar Pregunta de Encuesta -->
+    <div id="modalPreguntaAdmin" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="tituloModalPreguntaAdmin">Agregar Pregunta</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalPreguntaAdmin">&times;</button>
+            </header>
+            <form id="formPreguntaAdmin" novalidate>
+                <input type="hidden" id="preg_admin_id">
+                <input type="hidden" id="preg_admin_id_encuesta">
+                <div class="form-group">
+                    <label for="preg_admin_enunciado">Enunciado de la Pregunta *</label>
+                    <input type="text" id="preg_admin_enunciado" maxlength="300" placeholder="Ej. ¿La información provista fue clara?" required>
+                </div>
+                <div class="form-group">
+                    <label for="preg_admin_tipo">Tipo de Respuesta *</label>
+                    <select id="preg_admin_tipo" required>
+                        <option value="Si/No">Sí / No</option>
+                        <option value="Escala_1_5">Escala de Satisfacción (1 a 5)</option>
+                        <option value="Texto Libre">Texto Libre (Comentario abierto)</option>
+                        <option value="Opcion_Multiple">Opción Múltiple</option>
+                    </select>
+                </div>
+                <div class="form-group seccion-oculta" id="grupoPregAdminOpciones">
+                    <label for="preg_admin_opciones">Opciones (una por línea, mínimo 2) *</label>
+                    <textarea id="preg_admin_opciones" rows="3" style="width:100%; padding:0.6rem; border:1px solid #cbd5e1; border-radius:6px;" placeholder="Opción 1&#10;Opción 2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-cancel" id="btnCancelarModalPreguntaAdmin">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar Pregunta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Formulario de Alta de Documento -->
+    <div id="modalAlta" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Subir Documento Clínico</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalAlta">&times;</button>
+            </header>
+
+            <form id="formAltaDocumento" novalidate>
+                <div class="form-group">
+                    <label for="titulo">Título o Asunto del Documento *</label>
+                    <input type="text" id="titulo" name="titulo" maxlength="150" placeholder="Ej. Pauta de preparación nefrología" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_categoria">Categoría Institucional *</label>
+                    <select id="id_categoria" name="id_categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="archivo">Archivo Adjunto (Formato PDF - máx. 10 MB) *</label>
+                    <input type="file" id="archivo" name="archivo" accept=".pdf,application/pdf" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-cancel" id="btnCancelarModalAlta">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnGuardarDocumento">Guardar Documento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Formulario de Edición del Documento -->
+    <div id="modalEditar" class="modal oculta">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Editar Documento Clínico</h3>
+                <button type="button" class="btn-close" id="btnCerrarModalEditar">&times;</button>
+            </header>
+
+            <form id="formEditarDocumento" novalidate>
+                <input type="hidden" id="edit_id_documento" name="id_documento">
+
+                <div class="form-group">
+                    <label for="edit_titulo">Título o Asunto *</label>
+                    <input type="text" id="edit_titulo" name="titulo" maxlength="150" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_id_categoria">Categoría Institucional *</label>
+                    <select id="edit_id_categoria" name="id_categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_archivo">Reemplazar Archivo PDF (Opcional - Dejar vacío para conservar el actual)</label>
+                    <input type="file" id="edit_archivo" name="archivo" accept=".pdf,application/pdf">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-cancel" id="btnCancelarModalEditar">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnActualizarDocumento">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/documentos.js"></script>
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Academia Sigma. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>
