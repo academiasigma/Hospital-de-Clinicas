@@ -1,0 +1,937 @@
+S.I.G.S.M.
+Programación Full Stack
+Academia Sigma
+
+ROL C.I APELLIDO NOMBRE E-MAIL
+Coordinador 5.732710-4 Guedikian Facundo facuguedikian@gmail.com
+Subcoordinador 5.791557-5 Robaina Ihojan ihojarex.r@gmail.com
+Integrante 1 5.751664-0 Ezequiel Gomez gomezeze05@gmail.com
+Integrante 2 5.770.057-8 Chaitelle Nicolas nicolaschaitelleyapor@gmail.com
+
+Docente: Carlos Romero
+Fecha de culminación: 09/11/2026
+TERCERA ENTREGA - PROYECTO FINAL INTEGRADO
+I.S.B.O 3MN
+
+ÍNDICE GENERAL
+1. DECLARACIÓN DE AUTENTICIDAD, ÉTICA PROFESIONAL Y DESCARGO DE RESPONSABILIDAD
+2. JUSTIFICACIÓN TECNOLÓGICA DEL SISTEMA
+   2.1. Arquitectura de Tres Capas (CSR y RESTful APIs)
+        Estructura de Directorios en el Servidor (sigsm/)
+   2.2. Capa de Datos y Backend Seguro en PHP (PDO y BCRYPT)
+   2.3. Capa de Presentación e Interactividad Asíncrona (Fetch API y DOM)
+   2.4. Filosofía Mobile-First y Diseño Responsivo
+3. MODELADO DE DATOS Y NORMALIZACIÓN RELACIONAL
+   3.1. MER y DER Definitivos (14 Tablas Relacionales)
+   3.2. Proceso de Normalización (1FN, 2FN y 3FN)
+   3.3. Justificación de Nomenclatura (CP, CS, CE)
+4. ESPECIFICACIÓN DE LA BASE DE DATOS (DDL, DML Y DCL)
+   4.1. Sentencias de Creación Física (Script DDL Completo en sigsm_hospital)
+   4.2. Inserción de Datos de Prueba (DML Semilla Completo)
+   4.3. Control de Privilegios y Usuarios de Base de Datos (DCL)
+5. MATRIZ DE RESTRICCIONES NO ESTRUCTURALES (RNE) Y REGLAS DE NEGOCIO
+   5.1. RNE del Módulo A: Trazabilidad de Traslados y Flota (RNE01 a RNE07)
+   5.2. RNE del Módulo B: Gestión de Documentación y Encuestas (RNE08 a RNE14)
+   5.3. Implementación de Validación en Frontend y Backend
+6. ANÁLISIS ARQUITECTÓNICO DE CÓDIGO FUENTE
+   6.1. Capa de Datos: Conexión mediante PDO (Database.php) y Helper REST (Api.php)
+   6.2. Capa de Negocio: Clases de Dominio (Recurso, Traslado, Encuesta, Documento, Usuario, Categoria)
+   6.3. Capa de Servicios: Endpoints de Sesión y Autenticación Criptográfica (login.php, logout.php, sesion.php)
+   6.4. Enrutamiento RESTful (.htaccess) y Persistencia Real en Módulos de Ambulancias y Encuestas
+7. MANUAL DE DESPLIEGUE EN CONTENEDORES (DOCKER) E INTEGRACIÓN CON CENTOS STREAM 9
+   7.1. Empaquetado de la Aplicación Web (Dockerfile)
+   7.2. Orquestación (docker-compose.yml) e Integración Transversal con CentOS Stream 9
+   7.3. Casos de Prueba Ejecutables (Tercera Entrega)
+8. CONTROL DE VERSIONES Y GESTIÓN DEL REPOSITORIO (GIT / GITHUB)
+   8.1. Justificación y Metodología de Control de Versiones
+   8.2. Convenciones de Nomenclatura de Commits (Conventional Commits)
+   8.3. Enlace Oficial al Repositorio del Proyecto y Carpeta de Entrega
+9. REFERENCIAS BIBLIOGRÁFICAS Y FUENTES TÉCNICAS
+10. HOJA TESTIGO E INTEGRANTES
+
+================================================================================
+1. DECLARACIÓN DE AUTENTICIDAD, ÉTICA PROFESIONAL Y DESCARGO DE RESPONSABILIDAD
+================================================================================
+El equipo de desarrollo de Academia Sigma, integrado por los alumnos abajo firmantes, asume formal y éticamente el compromiso de autoría con respecto al material presentado en esta Tercera Entrega (Entrega Final Integrada) del proyecto de egreso S.I.G.S.M. (Sistema de Información para la Gestión de Servicios Médicos del Hospital de Clínicas).
+
+Consolidando la reconstrucción total iniciada en la entrega anterior, declaramos bajo firma que:
+1. Exclusividad de Diseño: La estructura relacional actual, el modelo de datos físico de 14 tablas en MariaDB (sigsm_hospital), las reglas de integridad referencial y las restricciones no estructurales han sido diseñadas, normalizadas y depuradas íntegramente por los integrantes de nuestro grupo.
+2. Autoría del Código: Cada línea de código PHP nativo, JavaScript moderno, maquetación HTML5 y estilos CSS3 es de nuestra autoría intelectual. No se ha copiado código ajeno ni se han empleado librerías o frameworks pesados de terceros que oculten la lógica fundamental de la materia.
+3. Compromiso Académico e Integración Transversal: Presentamos un software completamente funcional, robusto, empaquetado en contenedores Docker y conectado de forma transversal con el servidor de base de datos en producción sobre CentOS Stream 9 de la materia Administración de Sistemas Operativos, cumpliendo al 100% con los requerimientos finales del profesor y la letra oficial de la UTU.
+
+================================================================================
+2. JUSTIFICACIÓN TECNOLÓGICA DEL SISTEMA
+================================================================================
+
+2.1. Arquitectura de Tres Capas (CSR y RESTful APIs)
+S.I.G.S.M. ha sido diseñado bajo una arquitectura estricta de tres capas con el objetivo de separar de forma nítida las responsabilidades del sistema:
+
+● Capa de Presentación (Frontend): Compuesta por archivos HTML5 semántico, hojas de estilo CSS3 responsivas (Flexbox y CSS Grid) y JavaScript nativo asíncrono. Su función exclusiva es estructurar la interfaz, capturar las interacciones del usuario y renderizar dinámicamente los datos en pantalla mediante Client-Side Rendering (CSR) sin intervenir en la lógica de negocio ni conectarse directamente a la base de datos.
+● Capa de Negocio (Controladores REST y Modelos PHP): Empaquetada en un contenedor Docker (PHP 8.2 + Apache con mod_rewrite habilitado). Se encarga de enrutar los métodos HTTP estándar (GET, POST, PUT, DELETE), procesar los datos, validar las reglas de seguridad clínica (RNE01 a RNE14), verificar permisos de sesión por roles y asegurar la integridad de la información que ingresa al sistema.
+● Capa de Datos (MariaDB en Servidor CentOS Stream 9 / Contenedor): Motor relacional (sigsm_hospital) encargado de la persistencia física de la información mediante el usuario de aplicación con privilegios acotados (sigsm_app), garantizando la consistencia, concurrencia y la integridad referencial.
+
+La comunicación entre el Frontend y el Backend se realiza a través de RESTful APIs que intercambian datos exclusivamente en formato JSON mediante peticiones HTTP semánticas:
+- GET: Consultas y lecturas de recursos sin efectos colaterales.
+- POST: Creación de nuevos recursos (documentos, traslados, encuestas, resoluciones).
+- PUT: Actualización completa o de estado sobre recursos existentes identificados por su ID.
+- DELETE: Eliminación física o cancelación lógica de recursos protegidos.
+
+Estructura de Directorios en el Servidor:
+sigsm/
+├── .htaccess                        # Reescritura de URLs limpias REST (/api/recurso/{id})
+├── Dockerfile                       # Imagen PHP 8.2-Apache con pdo, pdo_mysql, mysqli y mod_rewrite
+├── docker-compose.yml               # Orquestación de contenedores (sigsm_web y sigsm_mariadb)
+├── sigsm_db.sql                     # Script DDL, DML y DCL (usuarios sigsm_admin y sigsm_app)
+├── api/                             # Endpoints RESTful (GET, POST, PUT, DELETE)
+│   ├── categorias/index.php         # ABM completo de categorías institucionales
+│   ├── choferes/index.php           # ABM de choferes de locomoción
+│   ├── documentos/index.php         # ABM de documentos PDF con validación MIME real
+│   ├── documentos/publicos.php      # Listado público para el Portal de Invitados
+│   ├── encuestas/index.php          # Encuestas anónimas, resultados y ABM de preguntas
+│   ├── enfermeros/index.php         # ABM de enfermeros acompañantes
+│   ├── objetos/index.php            # Catálogo de órganos, muestras e insumos
+│   ├── pacientes/index.php          # Registro manual y búsqueda de pacientes por C.I.
+│   ├── traslados/index.php          # ABM, filtros y cambios de estado/horarios de traslados
+│   ├── usuarios/index.php           # ABM de funcionarios institucionales
+│   ├── vehiculos/index.php          # ABM de flota (ambulancias y autos)
+│   ├── login.php                    # Inicio de sesión con verificación BCRYPT
+│   ├── logout.php                   # Cierre y destrucción segura de sesión
+│   └── sesion.php                   # Verificación de sesión activa y rol
+├── backend/                         # Capa de Negocio y Acceso a Datos (PDO)
+│   ├── config/
+│   │   ├── Api.php                  # Helper REST (métodos HTTP, lectura JSON, control de roles)
+│   │   ├── Auth.php                 # Gestión de sesiones PHP
+│   │   └── Database.php             # Conexión PDO parametrizada (CentOS 192.168.1.234 / Docker)
+│   └── models/
+│       ├── Recurso.php              # Clase abstracta base con CRUD preparado PDO
+│       ├── Categoria.php            # Modelo de categorías clínicas
+│       ├── Chofer.php               # Modelo de choferes
+│       ├── Documento.php            # Modelo de documentos clínicos PDF
+│       ├── Encuesta.php             # Modelo de encuestas, preguntas, opciones y resultados
+│       ├── Enfermero.php            # Modelo de enfermeros
+│       ├── Paciente.php             # Modelo de pacientes con upsert por C.I.
+│       ├── Traslado.php             # Modelo transaccional de traslados y reglas RNE01-RNE07
+│       ├── Usuario.php              # Modelo de funcionarios y autenticación
+│       └── Vehiculo.php             # Modelo de vehículos sanitarios
+├── frontend/                        # Capa de Presentación (HTML5, CSS3, JS Fetch API)
+│   ├── index.html                   # Login unificado y acceso directo al Portal de Invitados
+│   ├── css/                         # Estilos responsivos (Flexbox y CSS Grid)
+│   │   ├── style-ambulancias.css    # Estilos del módulo de traslados y grilla 2x2
+│   │   ├── style-documentos.css     # Estilos de gestión documental y tablas
+│   │   ├── style-login.css          # Estilos del portal de login institucional
+│   │   ├── style-panel.css          # Estilos del dashboard general de servicios
+│   │   └── style-portal.css         # Estilos mobile-first del portal de pacientes
+│   ├── html/                        # Vistas del sistema
+│   │   ├── ambulancias.html         # Panel de gestión y seguimiento de traslados
+│   │   ├── ambulancias-chofer.html  # Terminal móvil para conductores de ambulancia
+│   │   ├── ambulancias-recursos.html# Gestión de choferes, enfermeros y flota
+│   │   ├── documentos.html          # Gestión de PDFs, categorías y encuestas/resultados
+│   │   ├── panel.html               # Panel principal post-login
+│   │   ├── portal-invitados.html    # Portal público para pacientes y encuestas
+│   │   └── usuarios.html            # Gestión de funcionarios institucionales
+│   ├── img/                         # Recursos gráficos y logotipos institucionales
+│   └── js/                          # Controladores asíncronos en JS para manipulación de DOM
+│       ├── ambulancias.js           # Lógica cliente del módulo de traslados
+│       ├── ambulancias-chofer.js    # Trazabilidad en tiempo real de choferes
+│       ├── ambulancias-recursos.js  # ABM cliente de flota y personal asistencial
+│       ├── auth.js                  # Middleware cliente de control de sesiones y roles
+│       ├── documentos.js            # Lógica cliente de documentos, categorías y encuestas
+│       ├── login.js                 # Autenticación asíncrona cliente
+│       ├── panel.js                 # Renderizado de opciones del panel según rol
+│       ├── portal-invitados.js      # Catálogo público y envío anónimo de encuestas
+│       └── usuarios.js              # ABM cliente de funcionarios institucionales
+└── uploads/                         # Directorio físico de documentos PDF con permisos www-data
+    ├── documentos/
+    └── pdf/
+
+2.2. Capa de Datos y Backend Seguro en PHP (PDO y BCRYPT)
+Para garantizar un entorno corporativo estable y de máxima seguridad para el Hospital de Clínicas, se ejecutó PHP 8.2 bajo contenedor Dockerizado Apache:
+● Sentencias Preparadas con PDO (PHP Data Objects): Se implementó de forma mandatoria la clase nativa PDO con emulación de preparaciones desactivada (PDO::ATTR_EMULATE_PREPARES => false). Cada parámetro enviado por el usuario se enlaza a través de bindParam o bindValue, garantizando que el motor de base de datos trate los valores estrictamente como literales, neutralizando cualquier intento de Inyección SQL (SQLi).
+● Hashing Criptográfico BCRYPT: Las contraseñas nunca se almacenan en texto plano. Se implementó password_hash() con PASSWORD_BCRYPT para el almacenamiento y password_verify() para la autenticación en el endpoint login.php, cumpliendo estrictamente con la normativa de protección de datos personales.
+
+2.3. Capa de Presentación e Interactividad Asíncrona (Fetch API y DOM)
+El frontend de la aplicación elimina las recargas completas de pantalla. Se utiliza la Fetch API nativa de JavaScript mediante async/await para consumir los endpoints REST:
+● Manipulación Segura del DOM: Captura precisa de nodos mediante querySelector y querySelectorAll, saneamiento de strings contra ataques XSS mediante funciones de escape antes de renderizar y manipulación estructurada de atributos y clases CSS.
+● Tratamiento Inmutable y Filtrado Dinámico: Métodos no destructivos de arrays (filter, map, find, reduce) combinados con filtros del lado del servidor para responder instantáneamente en búsquedas por C.I. de paciente, matrícula de vehículo o estado de viaje.
+
+2.4. Filosofía Mobile-First y Diseño Responsivo
+Dado que los pacientes acceden al Portal de Invitados desde sus dispositivos móviles para consultar guías médicas y responder encuestas de satisfacción, y los choferes operan sus terminales logísticas desde tablets o smartphones en las ambulancias, toda la interfaz gráfica de S.I.G.S.M. fue desarrollada bajo la filosofía Mobile-First.
+● Layout con CSS Grid y Flexbox: CSS Grid para la distribución de paneles, tarjetas y la nueva grilla 2x2 (.condiciones-grid-2x2) de condiciones clínicas del paciente en el alta de traslados, y Flexbox para componentes internos (barras de herramientas, chips de selección y ventanas modales).
+● Unidades Relativas y Breakpoints: Escala fluida mediante rem, porcentajes y media queries graduales desde 375px (smartphones) hasta 1200px+ (estaciones de trabajo de escritorio).
+
+================================================================================
+3. MODELADO DE DATOS Y NORMALIZACIÓN RELACIONAL
+================================================================================
+
+3.1. MER y DER Definitivos (14 Tablas Relacionales)
+La base de datos relacional de S.I.G.S.M. cuenta con 14 tablas en MariaDB (sigsm_hospital) que modelan con exactitud los requerimientos del Hospital de Clínicas. Se agrupan en Tablas Maestras (Independientes) y Tablas Transaccionales de Soporte (Dependientes).
+
+Notación: Clave Primaria [PK], Clave Foránea [FK].
+
+A. ENTIDADES MAESTRAS Y DE RECURSOS:
+USUARIO (id_usuario [PK], email, nombre, contrasenia, rol, estado)
+● Dominio de rol: 'SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION'.
+● Dominio de estado: 'Activo', 'Inactivo'.
+
+CHOFER (id_chofer [PK], nombre, telefono, licencia)
+ENFERMERO (id_enfermero [PK], nombre, telefono, matricula_profesional)
+VEHICULO (id_vehiculo [PK], tipo_vehiculo, matricula, estado)
+● Dominio de tipo_vehiculo: 'Ambulancia', 'Auto'.
+● Dominio de estado: 'Disponible', 'En Traslado', 'Mantenimiento', 'Fuera de Servicio'.
+
+PACIENTE (id_paciente [PK], documento, nombre, telefono, fecha_de_nacimiento, requiere_oxigeno, requiere_camilla, requiere_aislamiento, se_maneja_por_sus_medios)
+OBJETO (id_objeto [PK], nombre, caracteristicas, tipo_objeto)
+● Dominio de tipo_objeto: 'organo', 'muestra_biologica', 'insumo_medico', 'documento', 'equipamiento'.
+CATEGORIA (id_categoria [PK], nombre)
+
+B. ENTIDADES TRANSACCIONALES Y DE SOPORTE OPERATIVO:
+DOCUMENTO (id_documento [PK], titulo, archivo, id_usuario [FK], id_categoria [FK])
+ENCUESTA (id_encuesta [PK], comentarios, estado, id_categoria [FK])
+● Dominio de estado: 'Borrador', 'Activa', 'Cerrada'.
+PREGUNTA (id_pregunta [PK], enunciado, tipo, id_encuesta [FK])
+● Dominio de tipo: 'Si/No', 'Texto Libre', 'Escala_1_5', 'Opcion_Multiple'.
+OPCION_PREGUNTA (id_opcion [PK], texto_opcion, id_pregunta [FK])
+RESOLUCION_ENCUESTA (id_resolucion [PK], fecha_hora, observaciones, id_encuesta [FK])
+RESPUESTA (id_respuesta [PK], contenido_respuesta, id_resolucion [FK], id_pregunta [FK])
+
+TRASLADO (id_traslado [PK], fecha, hora_salida, hora_estimada_llegada, hora_efectiva_llegada, hora_retorno, sector_origen, piso_origen, habitacion_origen, sector_destino, piso_destino, habitacion_destino, direccion_destino, estado, prioridad, observaciones, division_solicitante, motivo_procedimiento, responsable_recepcion, limite_horario, id_vehiculo [FK], id_chofer [FK], id_usuario [FK], id_enfermero [FK], id_paciente [FK], id_objeto [FK])
+● Dominio de estado: 'Pendiente', 'En Curso', 'Retornando', 'Finalizado', 'Cancelado'.
+● Dominio de prioridad: 'Alta', 'Media', 'Baja'.
+*Regla de nulabilidad: id_enfermero, id_paciente e id_objeto admiten valores NULL (exclusión mutua obligatoria entre paciente/objeto y enfermero opcional según prioridad). Asimismo, id_vehiculo e id_chofer admiten NULL únicamente mientras la solicitud se encuentra en estado 'Pendiente' (creada por un Usuario de División), siendo obligatoria su asignación por Gestión de Locomoción antes de iniciar el traslado ('En Curso').
+
+3.2. Proceso de Normalización (1FN, 2FN y 3FN)
+
+PRIMERA FORMA NORMAL (1FN):
+Objetivo: Eliminar atributos multivaluados, grupos repetitivos o listas anidadas, garantizar que todos los atributos tengan valores atómicos e indivisibles, y asegurar que cada tabla posea una clave primaria definida.
+Análisis aplicado:
+1. Desagregación de necesidades médicas en Paciente: Las condiciones clínicas no se almacenan como un campo de texto combinado, sino como atributos atómicos booleanos independientes (requiere_oxigeno, requiere_camilla, requiere_aislamiento, se_maneja_por_sus_medios).
+2. Desacople de opciones de preguntas: Para evitar almacenar listas de opciones separadas por comas dentro de la entidad PREGUNTA, se crea la entidad OPCION_PREGUNTA, garantizando la atomicidad de cada opción disponible.
+3. Desacople de respuestas individuales: Cada respuesta enviada por un usuario se almacena como un registro atómico individual en la tabla RESPUESTA, evitando vectores anidados en la resolución.
+4. Claves primarias simples: Cada relación posee un identificador unívoco simple (id_).
+
+SEGUNDA FORMA NORMAL (2FN):
+Objetivo: Cumplir con la 1FN y asegurar que todos los atributos que no forman parte de la clave primaria dependan de manera completa de esa clave primaria, eliminando dependencias funcionales parciales.
+Análisis aplicado: Una dependencia funcional parcial únicamente puede presentarse cuando una tabla posee una clave primaria compuesta. En este diseño relacional, todas las 14 tablas tienen claves primarias simples de atributo único (surrogate keys del tipo id_). Al no existir claves compuestas, es conceptualmente imposible que un atributo no-clave dependa de una fracción de la clave. Por ende, el esquema derivado de la 1FN cumple de forma estricta la Segunda Forma Normal.
+
+TERCERA FORMA NORMAL (3FN):
+Objetivo: Cumplir con la 2FN y garantizar que ningún atributo no-clave dependa transitivamente de la clave primaria (ningún atributo no-clave debe depender de otro atributo no-clave). Todos los atributos deben depender directa y exclusivamente de la clave primaria.
+Análisis aplicado:
+1. Independencia de Categorías y Documentación: DOCUMENTO almacena sus metadatos propios y referencia mediante clave foránea a CATEGORIA. Esto evita dependencias transitivas (id_documento -> id_categoria -> nombre_categoria) y previene anomalías de redundancia.
+2. Desacople en Módulo de Encuestas:
+   - OPCION_PREGUNTA contiene el atributo texto_opcion que depende de forma exclusiva de su identificador id_opcion.
+   - RESOLUCION_ENCUESTA registra las observaciones generales y fecha de envío de forma desacoplada de cada ítem de respuesta.
+   - RESPUESTA almacena únicamente su contenido individual vinculado a su pregunta y resolución.
+3. Desacople de Recursos y Trazabilidad en Traslados: La tabla TRASLADO almacena únicamente claves foráneas para referenciar los recursos operativos (vehículo, chofer, enfermero, paciente, objeto, usuario) sin duplicar datos descriptivos de las personas o vehículos.
+
+3.3. Justificación de Nomenclatura (CP, CS, CE)
+Para alinearnos de forma estricta con las exigencias metodológicas de la UTU, se implementó la siguiente convención para las restricciones en el motor InnoDB:
+● CP_ (Clave Primaria): Identifica la restricción de primary key. Ejemplo: CONSTRAINT CP_usuario PRIMARY KEY (id_usuario).
+● CS_ (Clave Secundaria): Identifica restricciones de unicidad o llaves candidatas (unique keys). Ejemplo: CONSTRAINT CS_usuario_email UNIQUE (email).
+● CE_ (Clave Externa / Foránea): Identifica restricciones de integridad referencial (foreign keys), detallando el origen y destino. Ejemplo: CONSTRAINT CE_documento_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario).
+
+================================================================================
+4. ESPECIFICACIÓN DE LA BASE DE DATOS (DDL, DML Y DCL)
+================================================================================
+
+4.1. Sentencias de Creación Física (Script DDL Completo en sigsm_hospital)
+
+DROP DATABASE IF EXISTS sigsm_hospital;
+CREATE DATABASE sigsm_hospital CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE sigsm_hospital;
+
+-- SECCIÓN 1: TABLAS MAESTRAS E INDEPENDIENTES
+
+CREATE TABLE usuario (
+    id_usuario INT AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    contrasenia VARCHAR(255) NOT NULL,
+    rol ENUM('SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION') NOT NULL,
+    estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+    CONSTRAINT CP_usuario PRIMARY KEY (id_usuario),
+    CONSTRAINT CS_usuario_email UNIQUE (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE chofer (
+    id_chofer INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    licencia VARCHAR(50) NOT NULL,
+    CONSTRAINT CP_chofer PRIMARY KEY (id_chofer),
+    CONSTRAINT CS_chofer_licencia UNIQUE (licencia)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE enfermero (
+    id_enfermero INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    matricula_profesional VARCHAR(50) NOT NULL,
+    CONSTRAINT CP_enfermero PRIMARY KEY (id_enfermero),
+    CONSTRAINT CS_enfermero_matricula UNIQUE (matricula_profesional)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE vehiculo (
+    id_vehiculo INT AUTO_INCREMENT,
+    tipo_vehiculo ENUM('Ambulancia', 'Auto') NOT NULL,
+    matricula VARCHAR(20) NOT NULL,
+    estado ENUM('Disponible', 'En Traslado', 'Mantenimiento', 'Fuera de Servicio') NOT NULL,
+    CONSTRAINT CP_vehiculo PRIMARY KEY (id_vehiculo),
+    CONSTRAINT CS_vehiculo_matricula UNIQUE (matricula)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE paciente (
+    id_paciente INT AUTO_INCREMENT,
+    documento VARCHAR(20) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20),
+    fecha_de_nacimiento DATE NOT NULL,
+    requiere_oxigeno TINYINT(1) DEFAULT 0,
+    requiere_camilla TINYINT(1) DEFAULT 0,
+    requiere_aislamiento TINYINT(1) DEFAULT 0,
+    se_maneja_por_sus_medios TINYINT(1) DEFAULT 1,
+    CONSTRAINT CP_paciente PRIMARY KEY (id_paciente),
+    CONSTRAINT CS_paciente_documento UNIQUE (documento)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE objeto (
+    id_objeto INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    caracteristicas TEXT,
+    tipo_objeto ENUM('organo', 'muestra_biologica', 'insumo_medico', 'documento', 'equipamiento') NOT NULL,
+    CONSTRAINT CP_objeto PRIMARY KEY (id_objeto)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE categoria (
+    id_categoria INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT CP_categoria PRIMARY KEY (id_categoria),
+    CONSTRAINT CS_categoria_nombre UNIQUE (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- SECCIÓN 2: ENTIDADES TRANSACCIONALES Y DE SOPORTE OPERATIVO
+
+CREATE TABLE documento (
+    id_documento INT AUTO_INCREMENT,
+    titulo VARCHAR(150) NOT NULL,
+    archivo VARCHAR(255) NOT NULL,
+    id_usuario INT NOT NULL,
+    id_categoria INT NOT NULL,
+    CONSTRAINT CP_documento PRIMARY KEY (id_documento),
+    CONSTRAINT CE_documento_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_documento_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE encuesta (
+    id_encuesta INT AUTO_INCREMENT,
+    comentarios TEXT,
+    estado ENUM('Borrador', 'Activa', 'Cerrada') NOT NULL DEFAULT 'Borrador',
+    id_categoria INT NOT NULL,
+    CONSTRAINT CP_encuesta PRIMARY KEY (id_encuesta),
+    CONSTRAINT CE_encuesta_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE pregunta (
+    id_pregunta INT AUTO_INCREMENT,
+    enunciado TEXT NOT NULL,
+    tipo ENUM('Si/No', 'Texto Libre', 'Escala_1_5', 'Opcion_Multiple') NOT NULL,
+    id_encuesta INT NOT NULL,
+    CONSTRAINT CP_pregunta PRIMARY KEY (id_pregunta),
+    CONSTRAINT CE_pregunta_encuesta FOREIGN KEY (id_encuesta) REFERENCES encuesta(id_encuesta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE opcion_pregunta (
+    id_opcion INT AUTO_INCREMENT,
+    texto_opcion VARCHAR(255) NOT NULL,
+    id_pregunta INT NOT NULL,
+    CONSTRAINT CP_opcion_pregunta PRIMARY KEY (id_opcion),
+    CONSTRAINT CE_opcion_pregunta_pregunta FOREIGN KEY (id_pregunta) REFERENCES pregunta(id_pregunta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE resolucion_encuesta (
+    id_resolucion INT AUTO_INCREMENT,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    observaciones TEXT,
+    id_encuesta INT NOT NULL,
+    CONSTRAINT CP_resolucion_encuesta PRIMARY KEY (id_resolucion),
+    CONSTRAINT CE_resolucion_encuesta_encuesta FOREIGN KEY (id_encuesta) REFERENCES encuesta(id_encuesta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE respuesta (
+    id_respuesta INT AUTO_INCREMENT,
+    contenido_respuesta TEXT NOT NULL,
+    id_resolucion INT NOT NULL,
+    id_pregunta INT NOT NULL,
+    CONSTRAINT CP_respuesta PRIMARY KEY (id_respuesta),
+    CONSTRAINT CE_respuesta_resolucion FOREIGN KEY (id_resolucion) REFERENCES resolucion_encuesta(id_resolucion) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT CE_respuesta_pregunta FOREIGN KEY (id_pregunta) REFERENCES pregunta(id_pregunta) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE traslado (
+    id_traslado INT AUTO_INCREMENT,
+    fecha DATE NOT NULL,
+    hora_salida TIME NOT NULL,
+    hora_estimada_llegada TIME NOT NULL,
+    hora_efectiva_llegada TIME,
+    hora_retorno TIME,
+    sector_origen VARCHAR(100) NOT NULL,
+    piso_origen VARCHAR(20) NOT NULL,
+    habitacion_origen VARCHAR(20),
+    sector_destino VARCHAR(100) NOT NULL,
+    piso_destino VARCHAR(20) NOT NULL,
+    habitacion_destino VARCHAR(20),
+    direccion_destino VARCHAR(200) NOT NULL,
+    estado ENUM('Pendiente', 'En Curso', 'Retornando', 'Finalizado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
+    prioridad ENUM('Alta', 'Media', 'Baja') NOT NULL DEFAULT 'Media',
+    observaciones TEXT,
+    division_solicitante VARCHAR(100) NOT NULL,
+    motivo_procedimiento VARCHAR(200) NOT NULL,
+    responsable_recepcion VARCHAR(100) NOT NULL,
+    limite_horario TIME,
+    id_vehiculo INT NULL,
+    id_chofer INT NULL,
+    id_usuario INT NOT NULL,
+    id_enfermero INT NULL,
+    id_paciente INT NULL,
+    id_objeto INT NULL,
+    CONSTRAINT CP_traslado PRIMARY KEY (id_traslado),
+    CONSTRAINT CE_traslado_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES vehiculo(id_vehiculo) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_chofer FOREIGN KEY (id_chofer) REFERENCES chofer(id_chofer) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_enfermero FOREIGN KEY (id_enfermero) REFERENCES enfermero(id_enfermero) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_paciente FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CE_traslado_objeto FOREIGN KEY (id_objeto) REFERENCES objeto(id_objeto) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT CK_traslado_cronologia CHECK (hora_estimada_llegada > hora_salida AND (hora_efectiva_llegada IS NULL OR hora_efectiva_llegada > hora_salida) AND (hora_retorno IS NULL OR hora_efectiva_llegada IS NULL OR hora_retorno >= hora_efectiva_llegada))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+4.2. Inserción de Datos de Prueba (DML Semilla Completo)
+
+-- Usuarios iniciales (Clave de prueba: "password" encriptada con BCRYPT)
+INSERT INTO usuario (email, nombre, contrasenia, rol, estado) VALUES 
+('superadmin@hc.edu.uy', 'SuperAdmin IT', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo'),
+('gestor@hc.edu.uy', 'Gestor Integral', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'GESTOR_INTEGRAL', 'Activo'),
+('director@hc.edu.uy', 'Director General', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'DIRECTOR_GENERAL', 'Activo'),
+('division@hc.edu.uy', 'Usuario Division', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'USUARIO_DIVISION', 'Activo');
+
+-- Categorías médicas institucionales
+INSERT INTO categoria (nombre) VALUES 
+('Indicaciones Médicas y Quirúrgicas'),
+('Preparación para Estudios'),
+('Enfermería y Trasplantes'),
+('Encuestas de Satisfacción'),
+('Protocolos de Prevención');
+
+-- Choferes
+INSERT INTO chofer (nombre, telefono, licencia) VALUES 
+('Carlos Rodríguez', '099123456', 'LIC-CH-001'),
+('Mario Gómez', '098765432', 'LIC-CH-002'),
+('Juan Pérez', '097111222', 'LIC-CH-003'),
+('Marcelo Silva', '096333444', 'LIC-CH-004'),
+('Santiago Pereira', '095555666', 'LIC-CH-005'),
+('Jorge González', '094777888', 'LIC-CH-006'),
+('Alejandro Rodríguez', '093999000', 'LIC-CH-007'),
+('Néstor Cabrera', '092111333', 'LIC-CH-008');
+
+-- Enfermeros
+INSERT INTO enfermero (nombre, telefono, matricula_profesional) VALUES 
+('Ana Martínez', '091112233', 'ENF-MAT-101');
+
+-- Vehículos sanitarios
+INSERT INTO vehiculo (tipo_vehiculo, matricula, estado) VALUES 
+('Ambulancia', 'SCA-1001', 'Disponible'),
+('Auto', 'SCA-2002', 'Disponible');
+
+-- Pacientes iniciales
+INSERT INTO paciente (documento, nombre, telefono, fecha_de_nacimiento, requiere_oxigeno, requiere_camilla, requiere_aislamiento, se_maneja_por_sus_medios) VALUES 
+('57327104', 'Facundo Guedikian', '099111222', '1995-01-01', 0, 0, 0, 1),
+('57915575', 'Ihojan Robaina', '099222333', '1996-02-02', 0, 0, 0, 1),
+('57516640', 'Ezequiel Gomez', '099333444', '1997-03-03', 0, 0, 0, 1),
+('57700578', 'Nicolas Chaitelle', '099444555', '1998-04-04', 0, 0, 0, 1);
+
+-- Objetos e insumos de traslado
+INSERT INTO objeto (nombre, caracteristicas, tipo_objeto) VALUES 
+('Órgano: Corazón para Trasplante', 'Caja térmica refrigerada, transporte urgente, prioridad alta', 'organo'),
+('Muestra Biológica: Biopsia urgente', 'Tubo refrigerado para laboratorio de patología', 'muestra_biologica'),
+('Insumos: Medicamentos Oncológicos', 'Caja sellada para farmacia, mantener en temperatura fresca', 'insumo_medico');
+
+-- Documentos clínicos iniciales
+INSERT INTO documento (titulo, archivo, id_usuario, id_categoria) VALUES 
+('Indicaciones de interrupción voluntaria del embarazo', 'uploads/documentos/ive_indicaciones.pdf', 1, 1),
+('Preparación para ecocardiograma transesofágico', 'uploads/documentos/ecocardiograma_prep.pdf', 1, 2),
+('Plan de alta de enfermería en Nefrología', 'uploads/documentos/nefrologia_alta.pdf', 1, 3);
+
+-- Encuestas activas de satisfacción
+INSERT INTO encuesta (id_encuesta, comentarios, estado, id_categoria) VALUES 
+(1, 'Encuesta del Área Ginecología/IVE', 'Activa', 1),
+(2, 'Encuesta del Área Estudios Imagenológicos', 'Activa', 2),
+(3, 'Encuesta del Área Enfermería y Trasplantes', 'Activa', 3);
+
+-- Preguntas asociadas a las encuestas
+INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
+(1, '¿La información provista en la guía clínica fue clara y fácil de entender?', 'Si/No', 1),
+(2, 'Califique la calidad de la atención médica recibida durante su consulta:', 'Escala_1_5', 1),
+(3, 'Sugerencias o comentarios adicionales para mejorar este instructivo:', 'Texto Libre', 1),
+(4, '¿Le resultó sencillo seguir las indicaciones de ayuno y preparación para su estudio?', 'Si/No', 2),
+(5, 'Califique la amabilidad y el respeto mostrado por el personal técnico:', 'Escala_1_5', 2),
+(6, 'Deje sus comentarios sobre su experiencia general de preparación:', 'Texto Libre', 2),
+(7, '¿La explicación de los cuidados post-alta domiciliaria por parte del enfermero fue clara?', 'Si/No', 3),
+(8, 'Califique la preparación técnica y el trato brindado por el personal de enfermería:', 'Escala_1_5', 3),
+(9, 'Escriba aquí sus observaciones o sugerencias para mejorar el plan de alta:', 'Texto Libre', 3);
+
+4.3. Control de Privilegios y Usuarios de Base de Datos (DCL)
+En cumplimiento del principio de mínimo privilegio exigido para la puesta en producción, se definieron dos usuarios diferenciados en MariaDB:
+1. sigsm_admin: Cuenta de administración de base de datos con privilegios totales (ALL PRIVILEGES) para tareas de mantenimiento y migración estructural (DDL).
+2. sigsm_app: Cuenta exclusiva consumida por la aplicación PHP a través de PDO, restringida estrictamente a operaciones de manipulación de datos (SELECT, INSERT, UPDATE, DELETE) sobre el esquema sigsm_hospital, impidiendo cualquier ejecución de comandos destructivos como DROP, ALTER o TRUNCATE desde la capa web.
+
+CREATE USER IF NOT EXISTS 'sigsm_admin'@'%' IDENTIFIED BY 'HcAdmin_2026!';
+GRANT ALL PRIVILEGES ON sigsm_hospital.* TO 'sigsm_admin'@'%' WITH GRANT OPTION;
+
+CREATE USER IF NOT EXISTS 'sigsm_app'@'%' IDENTIFIED BY 'Hc1234_db';
+GRANT SELECT, INSERT, UPDATE, DELETE ON sigsm_hospital.* TO 'sigsm_app'@'%';
+
+FLUSH PRIVILEGES;
+
+================================================================================
+5. MATRIZ DE RESTRICCIONES NO ESTRUCTURALES (RNE) Y REGLAS DE NEGOCIO
+================================================================================
+
+Toda la lógica de desarrollo de S.I.G.S.M. está acotada por Restricciones No Estructurales (RNE) y reglas de seguridad clínica que garantizan la consistencia transaccional y la seguridad del paciente:
+
+5.1. RNE del Módulo A: Trazabilidad de Traslados y Flota
+● RNE01 - Coherencia Cronológica del Ciclo de Traslado: hora_salida < hora_efectiva_llegada <= hora_retorno. Protegida físicamente en base de datos mediante el CHECK CK_traslado_cronologia y validada en Traslado::cambiarEstado().
+● RNE02 - Exclusividad Temporal de Recursos (Vehículo, Chofer y Enfermero): Ningún vehículo, chofer o enfermero puede estar asignado a más de un traslado cuyo intervalo de tiempo [hora_salida, hora_retorno/hora_estimada_llegada] se superponga con otro traslado activo (Traslado::haySolapamiento()).
+● RNE03 - Exclusividad y Validación de Carga en Traslado: Un traslado debe asociarse obligatoriamente a un paciente (id_paciente) o a un objeto (id_objeto), nunca a ambos ni a ninguno. Si traslada un paciente con prioridad 'Alta' (Urgencia Médica), la asignación de un enfermero acompañante es obligatoria. Si traslada un objeto, no lleva enfermero acompañante.
+● RNE04 - Disponibilidad Operativa del Vehículo: Solo podrán asignarse a un nuevo traslado aquellos vehículos cuyo estado sea 'Disponible'. Un vehículo en 'Mantenimiento' o 'Fuera de Servicio' es rechazado automáticamente.
+● RNE05 - Protocolo Estricto para Órganos: Si tipo_objeto = 'organo', el traslado adquiere automáticamente prioridad máxima ('Alta') y exige registrar una hora límite en limite_horario. Debe realizarse obligatoriamente en Ambulancia y no requiere enfermero acompañante al tratarse de un contenedor hermético.
+● RNE06 - Autonomía y Condiciones Clínicas del Paciente: Si el paciente no se maneja por sus propios medios, o requiere camilla, oxígeno o aislamiento, el traslado requiere obligatoriamente una Ambulancia.
+● RNE07 - Restricción Geográfica Metropolitana: Los destinos de los traslados están restringidos al circuito interno y la zona metropolitana (Montevideo y Canelones), rechazando destinos hacia los 17 departamentos del interior del país.
+
+5.2. RNE del Módulo B: Gestión de Documentación y Encuestas
+● RNE08 - Restricción de Vigencia para Resoluciones de Encuesta: Solo se permite la inserción de respuestas si la encuesta correspondiente se encuentra en estado = 'Activa'. Al activar una nueva encuesta para una categoría, el sistema cierra automáticamente las anteriores para garantizar que exista una única encuesta activa por servicio.
+● RNE09 - Integridad Consistente del Formulario de Respuestas: Todas las instancias de respuesta vinculadas a una misma resolución deben corresponder estrictamente a preguntas que formen parte de la misma encuesta asociada.
+● RNE10 - Validación de Dominio por Tipo de Pregunta:
+  - Si tipo = 'Si/No', el valor solo puede ser 'Sí' o 'No'.
+  - Si tipo = 'Escala_1_5', el valor debe ser un entero entre 1 y 5.
+  - Si tipo = 'Opcion_Multiple', el valor debe coincidir con una de las opciones registradas en opcion_pregunta para dicha pregunta.
+  - Si tipo = 'Texto Libre', se admite texto abierto alfanumérico.
+● RNE11 - Jerarquía de Permisos en Gestión de Usuarios: Las operaciones de creación, edición de rol o baja de cuentas únicamente pueden ser ejecutadas por un usuario autenticado con rol SUPERADMIN_IT.
+● RNE12 - Unicidad de Credencial de Acceso: El email en la entidad usuario debe ser único en toda la base de datos (CS_usuario_email).
+● RNE13 - Validación Estricta de Archivos Clínicos PDF: Todo archivo subido al módulo de documentación es validado en el servidor verificando su tipo MIME real mediante inspección binaria (finfo_file === 'application/pdf') y su firma de cabecera ('%PDF-'), rechazando archivos ejecutables o imágenes renombradas.
+● RNE14 - Integridad Referencial en Categorías Institucionales: No se permite eliminar una categoría que posea documentos clínicos asociados (ON DELETE RESTRICT), devolviendo código HTTP 409 (Conflict).
+
+5.3. Implementación de Validación en Frontend y Backend
+La arquitectura garantiza una doble barrera de seguridad:
+1. Frontend (UX Preventivo): Formularios con validación HTML5 y controladores JavaScript que anticipan errores (búsqueda de paciente por C.I. con autocompletado, deshabilitación de botones de envío durante peticiones asíncronas y retroalimentación inmediata sin recarga).
+2. Backend (Garantía Transaccional Indestructible): Cada endpoint REST valida tipado, dominios permitidos y reglas RNE en PHP antes de ejecutar consultas preparadas con PDO, respondiendo con los códigos de error HTTP semánticos (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict y 500 Internal Error).
+
+================================================================================
+6. ANÁLISIS ARQUITECTÓNICO DE CÓDIGO FUENTE
+================================================================================
+
+6.1. Capa de Datos: Conexión mediante PDO (Database.php) y Helper REST (Api.php)
+
+Database.php:
+Centraliza la conexión PDO segura parametrizada hacia el servidor MariaDB en CentOS Stream 9 (192.168.1.234:3306) o el contenedor local mediante variables de entorno:
+
+<?php
+
+class Database {
+    private string $host;
+    private string $port;
+    private string $db_name;
+    private string $username;
+    private string $password;
+    private ?PDO $conexion = null;
+
+    public function __construct() {
+        $this->host     = getenv('DB_HOST') ?: '192.168.1.234';
+        $this->port     = getenv('DB_PORT') ?: '3306';
+        $this->db_name  = getenv('DB_NAME') ?: 'sigsm_hospital';
+        $this->username = getenv('DB_USER') ?: 'sigsm_app';
+        $this->password = getenv('DB_PASS') ?: 'Hc1234_db';
+    }
+
+    public function conectar(): ?PDO {
+        $this->conexion = null;
+        try {
+            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset=utf8mb4";
+            $opciones = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ];
+            $this->conexion = new PDO($dsn, $this->username, $this->password, $opciones);
+        } catch (PDOException $e) {
+            error_log('Error de conexión a la base de datos: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'mensaje' => 'Error de conexión a la base de datos.']);
+            exit;
+        }
+        return $this->conexion;
+    }
+}
+
+Api.php:
+Provee utilidades para los controladores REST (manejo de CORS, detección de método HTTP estándar, captura de IDs desde URLs limpias, lectura de JSON desde php://input y control de sesiones y roles):
+
+<?php
+
+require_once __DIR__ . '/Auth.php';
+
+class Api {
+    public static function iniciar(array $metodosPermitidos = ['GET']): string {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if ($metodo === 'OPTIONS') {
+            http_response_code(204);
+            exit;
+        }
+        if (!in_array($metodo, $metodosPermitidos, true)) {
+            self::error(405, "Método $metodo no permitido.");
+        }
+        return $metodo;
+    }
+
+    public static function responder(int $codigo, array $payload): void {
+        http_response_code($codigo);
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    public static function error(int $codigo, string $mensaje): void {
+        self::responder($codigo, ['status' => 'error', 'mensaje' => $mensaje]);
+    }
+
+    public static function idDeLaUrl(): ?int {
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+        if (preg_match('#/([0-9]+)$#', $uri, $m)) {
+            return (int)$m[1];
+        }
+        return null;
+    }
+
+    public static function entrada(): array {
+        $raw = file_get_contents('php://input');
+        $json = json_decode($raw, true);
+        return is_array($json) ? $json : $_POST;
+    }
+
+    public static function exigirRol(array $rolesPermitidos): array {
+        Auth::iniciarSesion();
+        $usuario = $_SESSION['usuario'] ?? null;
+        if (!$usuario) {
+            self::error(401, 'No autorizado. Debe iniciar sesión.');
+        }
+        if (!in_array($usuario['rol'] ?? '', $rolesPermitidos, true)) {
+            self::error(403, 'Acceso denegado. Permisos insuficientes.');
+        }
+        return $usuario;
+    }
+}
+
+6.2. Capa de Negocio: Clases de Dominio
+
+A. Clase Base Abstracta Recurso.php:
+Implementa el patrón de acceso a datos seguro con PDO para las entidades simples del sistema (Chofer, Enfermero, Vehiculo, Paciente, Categoria), clasificando los errores de integridad referencial (1451) y duplicados (1062):
+
+<?php
+
+require_once __DIR__ . '/../config/Database.php';
+
+abstract class Recurso {
+    protected ?PDO $conexion;
+    protected string $tabla;
+    protected string $clavePrimaria;
+    protected array $campos = [];
+    public string $ultimoError = '';
+
+    public function __construct() {
+        $db = new Database();
+        $this->conexion = $db->conectar();
+    }
+
+    abstract public function validar(array $datos): array;
+
+    public function listar(array $filtros = []): array {
+        $sql = "SELECT * FROM {$this->tabla} ORDER BY {$this->clavePrimaria} ASC";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function obtenerPorId(int $id): ?array {
+        $sql = "SELECT * FROM {$this->tabla} WHERE {$this->clavePrimaria} = :id LIMIT 1";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $fila = $stmt->fetch();
+        return $fila ?: null;
+    }
+
+    public function crear(array $datos): ?int {
+        $this->ultimoError = '';
+        $columnas = implode(', ', $this->campos);
+        $marcas = implode(', ', array_map(fn($c) => ':' . $c, $this->campos));
+        $sql = "INSERT INTO {$this->tabla} ($columnas) VALUES ($marcas)";
+        try {
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->execute($this->limpiar($datos));
+            return (int)$this->conexion->lastInsertId();
+        } catch (PDOException $e) {
+            $this->registrarError($e);
+            return null;
+        }
+    }
+
+    public function actualizar(int $id, array $datos): bool {
+        $this->ultimoError = '';
+        $asignaciones = implode(', ', array_map(fn($c) => "$c = :$c", $this->campos));
+        $sql = "UPDATE {$this->tabla} SET $asignaciones WHERE {$this->clavePrimaria} = :id_registro";
+        try {
+            $stmt = $this->conexion->prepare($sql);
+            $parametros = $this->limpiar($datos);
+            $parametros['id_registro'] = $id;
+            return $stmt->execute($parametros);
+        } catch (PDOException $e) {
+            $this->registrarError($e);
+            return false;
+        }
+    }
+
+    public function eliminar(int $id): bool {
+        $this->ultimoError = '';
+        $sql = "DELETE FROM {$this->tabla} WHERE {$this->clavePrimaria} = :id";
+        try {
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            $this->registrarError($e);
+            return false;
+        }
+    }
+
+    protected function limpiar(array $datos): array {
+        $limpio = [];
+        foreach ($this->campos as $campo) {
+            $valor = $datos[$campo] ?? null;
+            if (is_string($valor)) {
+                $valor = trim($valor);
+                $valor = ($valor === '') ? null : $valor;
+            }
+            $limpio[$campo] = $valor;
+        }
+        return $limpio;
+    }
+
+    protected function registrarError(PDOException $e): void {
+        $codigoMotor = $e->errorInfo[1] ?? 0;
+        if ($codigoMotor === 1062) {
+            $this->ultimoError = 'duplicado';
+        } elseif ($codigoMotor === 1451) {
+            $this->ultimoError = 'referenciado';
+        } else {
+            $this->ultimoError = 'error';
+        }
+    }
+}
+
+B. Modelo Traslado.php:
+Gestiona la lógica transaccional de traslados sanitarios, el control de concurrencia y la verificación estricta de las reglas RNE01 a RNE07:
+- validar(): Aplica exclusividad paciente/objeto (RNE03), tipo de vehículo ambulancia requerido según condiciones clínicas del paciente o carga de órganos (RNE05/RNE06), disponibilidad del vehículo (RNE04), obligatoriedad de enfermero para paciente con prioridad alta (RNE03) y no solapamiento temporal de vehículos, choferes y enfermeros (RNE02).
+- cambiarEstado(): Aplica la máquina de estados permitida (Pendiente -> En Curso -> Retornando -> Finalizado / Cancelado), registra hora_efectiva_llegada al retornar y hora_retorno al finalizar (RNE01), y sincroniza el estado del vehículo a 'En Traslado' o 'Disponible'.
+
+C. Modelo Encuesta.php:
+Gestiona encuestas de satisfacción, el ABM de preguntas y opciones, y la consolidación de resultados:
+- guardarResolucion(): Valida que la encuesta esté en estado 'Activa' (RNE08), que las preguntas pertenezcan a la encuesta (RNE09) y que las respuestas pertenezcan al dominio de su tipo (RNE10), almacenando de forma anónima y transaccional en resolucion_encuesta y respuesta.
+- obtenerResultados(): Agrupa y calcula los resultados estadísticos: conteo de Sí/No, promedio ponderado y distribución de calificaciones 1 a 5, conteo de frecuencias de opciones múltiples y recopilación de observaciones libres de pacientes.
+- crearPregunta(), actualizarPregunta(), eliminarPregunta(): ABM de preguntas y opciones múltiples en opcion_pregunta.
+
+D. Modelo Documento.php:
+Encapsula el ABM de documentos clínicos, la vinculación mediante INNER JOIN con categorías y usuarios autores, y la validación de archivos PDF.
+
+E. Modelo Usuario.php:
+Implementa la autenticación con password_verify(), el alta segura con password_hash() BCRYPT y el listado de funcionarios institucionales.
+
+6.3. Capa de Servicios: Endpoints de Sesión y Autenticación Criptográfica
+- login.php: Recibe las credenciales por POST en JSON, valida contra Usuario::autenticar(), inicia la sesión de PHP con session_start() y registra la identidad en $_SESSION['usuario'].
+- logout.php: Invalida las variables de sesión ($_SESSION = []), revoca la cookie de sesión en el navegador con fecha de expiración pasada y destruye la sesión en el servidor con session_destroy().
+- sesion.php: Retorna en formato JSON el estado de la sesión actual y los datos del funcionario conectado (id, nombre, email, rol).
+
+6.4. Enrutamiento RESTful (.htaccess) y Persistencia Real en Módulos de Ambulancias y Encuestas
+En esta Tercera Entrega se eliminó por completo la simulación en memoria local (localStorage) de la etapa anterior, migrando el Módulo de Ambulancias (panel administrativo, gestión de flota/choferes/enfermeros y terminal móvil de chofer) y el Módulo de Documentación, Categorías y Encuestas a una arquitectura 100% persistente en MariaDB mediante endpoints RESTful.
+
+A. Reescritura de URLs Limpias (.htaccess):
+Mediante el módulo mod_rewrite de Apache, el archivo .htaccess redirige las rutas con identificador hacia el archivo index.php de cada recurso:
+
+DirectorySlash Off
+Options -Indexes
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([a-z_]+)/([0-9]+)$ api/$1/index.php [L,QSA]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^api/([a-z_]+)$ api/$1/index.php [L,QSA]
+
+B. Persistencia y Trazabilidad en Ambulancias:
+- POST /api/traslados: Registra una nueva solicitud de traslado en MariaDB.
+- GET /api/traslados?documento=...&id_vehiculo=...&estado=...: Retorna el historial filtrado.
+- PUT /api/traslados/{id}: Actualiza datos o procesa transiciones de estado y horarios.
+- DELETE /api/traslados/{id}: Realiza la cancelación lógica del traslado preservando la auditoría.
+- Terminal Móvil del Chofer (ambulancias-chofer.html): Consulta en tiempo real los traslados asignados al chofer autenticado directamente en MariaDB, permitiendo registrar la salida ('En Curso'), la llegada a destino ('Retornando') y el regreso a base ('Finalizado').
+
+================================================================================
+7. MANUAL DE DESPLIEGUE EN CONTENEDORES (DOCKER) E INTEGRACIÓN CON CENTOS STREAM 9
+================================================================================
+
+7.1. Empaquetado de la Aplicación Web (Dockerfile)
+Para garantizar la portabilidad del entorno de ejecución y el cumplimiento de los requisitos de infraestructura de la Tercera Entrega, la aplicación web fue contenedorizada sobre la imagen oficial php:8.2-apache, compilando las extensiones de acceso a datos (pdo, pdo_mysql, mysqli), habilitando el módulo de reescritura de URLs (a2enmod rewrite) y configurando los permisos del usuario www-data sobre el directorio de subida de documentos PDF:
+
+FROM php:8.2-apache
+
+# Extensiones PDO para conectar con MariaDB
+RUN docker-php-ext-install pdo pdo_mysql mysqli
+
+# mod_rewrite para el .htaccess (ruteo REST)
+RUN a2enmod rewrite
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+
+WORKDIR /var/www/html
+COPY . .
+
+# Crear la carpeta de documentos
+RUN mkdir -p /var/www/html/uploads/pdf /var/www/html/uploads/documentos \
+    && chown -R www-data:www-data /var/www/html/uploads \
+    && chmod -R 755 /var/www/html/uploads
+
+# Asignar propietario al proyecto
+RUN chown -R www-data:www-data /var/www/html
+
+7.2. Orquestación (docker-compose.yml) e Integración Transversal con CentOS Stream 9
+El archivo docker-compose.yml despliega el contenedor web (sigsm_web en el puerto 8080:80) y permite tanto la conexión directa al servidor de producción MariaDB alojado en CentOS Stream 9 (192.168.1.234:3306) como el despliegue autónomo con el servicio sigsm_mariadb:
+
+services:
+  sigsm_web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sigsm_web
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: "192.168.1.234"
+      DB_PORT: "3306"
+      DB_NAME: "sigsm_hospital"
+      DB_USER: "sigsm_app"
+      DB_PASS: "Hc1234_db"
+    depends_on:
+      sigsm_mariadb:
+        condition: service_healthy
+    volumes:
+      - uploads-volume:/var/www/html/uploads
+    networks:
+      - sigsm_net
+
+  sigsm_mariadb:
+    image: mariadb:11
+    container_name: sigsm_mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sigsm_hospital
+      MYSQL_USER: sigsm_app
+      MYSQL_PASSWORD: Hc1234_db
+    ports:
+      - "33060:3306"
+    volumes:
+      - db-volume:/var/lib/mysql
+      - ./sigsm_db.sql:/docker-entrypoint-initdb.d/01-sigsm.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - sigsm_net
+
+networks:
+  sigsm_net:
+
+volumes:
+  db-volume:
+  uploads-volume:
+
+Pasos de puesta en marcha:
+1. Ubicarse en el directorio del proyecto: cd sigsm
+2. Construir y levantar los contenedores: docker compose up -d --build
+3. Acceder al sistema web desde el navegador: http://localhost:8080/frontend/index.html
+
+7.3. Casos de Prueba Ejecutables (Tercera Entrega)
+
+Caso de Prueba 1: Autenticación Segura y Control de Acceso por Roles
+● Procedimiento: Intentar acceder a http://localhost:8080/frontend/html/usuarios.html sin sesión activa o iniciando sesión con el rol USUARIO_DIVISION (division@hc.edu.uy / password).
+● Resultado Esperado: Sin sesión activa, auth.js redirige automáticamente al login. Con rol USUARIO_DIVISION, el backend (Api::exigirRol(['SUPERADMIN_IT'])) bloquea cualquier intento de alta, edición o baja de usuarios respondiendo con código HTTP 403 (Forbidden).
+
+Caso de Prueba 2: Ciclo Completo de Traslado, No Solapamiento Horario y Filtros (Módulo Ambulancias)
+● Procedimiento: Iniciar sesión como GESTOR_INTEGRAL (gestor@hc.edu.uy / password), ingresar a Gestión de Traslados, buscar un paciente por C.I. (ej. 57327104), asignar la ambulancia SCA-1001 y un chofer, y registrar el traslado (POST /api/traslados). Luego abrir la Terminal de Chofer, iniciar el viaje (PUT /api/traslados/{id} -> 'En Curso'), registrar llegada a destino ('Retornando') y retorno al hospital ('Finalizado'). Finalmente filtrar el historial por C.I. del paciente o por vehículo.
+● Resultado Esperado: El traslado persiste en MariaDB (servidor CentOS 192.168.1.234), actualiza el estado del vehículo a 'En Traslado' mientras está activo y lo devuelve a 'Disponible' al finalizar, registrando hora_efectiva_llegada y hora_retorno. Si se intenta asignar el mismo vehículo o chofer en un horario superpuesto, el servidor rechaza la operación con HTTP 409 (Conflict).
+
+Caso de Prueba 3: CRUD REST de Documentos/Categorías y Encuesta de Satisfacción Anónima
+● Procedimiento: En Gestión de Documentación, intentar eliminar una categoría que tenga documentos asociados (DELETE /api/categorias/1). Luego ingresar al Portal de Invitados (portal-invitados.html), responder una encuesta activa y verificar la pestaña "Encuestas y Resultados" en el panel administrativo.
+● Resultado Esperado: El servidor impide borrar la categoría con documentos asociados (HTTP 409). Al enviar la encuesta desde el Portal de Invitados, las respuestas se almacenan de forma transaccional y anónima en resolucion_encuesta y respuesta, actualizando inmediatamente los promedios, porcentajes y comentarios en la pestaña "Encuestas y Resultados".
+
+================================================================================
+8. CONTROL DE VERSIONES Y GESTIÓN DEL REPOSITORIO (GIT / GITHUB)
+================================================================================
+
+8.1. Justificación y Metodología de Control de Versiones
+Esta selección tecnológica responde a las siguientes necesidades del proyecto:
+● Integridad y auditoría del código: Registro inmutable de cada modificación y facilidad de reversión ante incidentes.
+● Trabajo concurrente y modular: Permite el desarrollo simultáneo de la capa de datos, los controladores backend en PHP y las interfaces asíncronas en JavaScript sin sobreescritura accidental de archivos.
+● Respaldo y portabilidad: Sincronización continua de versiones funcionales accesibles para despliegue directo en el entorno Dockerizado de cualquier miembro del equipo.
+
+8.2. Convenciones de Nomenclatura de Commits (Conventional Commits)
+Para mantener un historial limpio, comprensible y profesional, el equipo adoptó la especificación de Conventional Commits:
+● feat: Incorporación de una nueva funcionalidad (endpoints, vistas, formularios).
+● fix: Corrección de un error o vulnerabilidad en la lógica o scripts.
+● refactor: Reestructuración de código sin alterar su comportamiento funcional.
+● db: Modificaciones sobre scripts DDL, claves o datos semilla DML/DCL.
+● chore: Tareas de infraestructura, Dockerfile, docker-compose o configuración.
+
+8.3. Enlace Oficial al Repositorio del Proyecto y Carpeta de Entrega
+El código fuente completo, los archivos de contenedorización Docker (Dockerfile y docker-compose.yml), los endpoints RESTful de tres capas y el script de base de datos de esta Tercera Entrega se encuentran disponibles en el repositorio oficial del equipo:
+● URL del Repositorio en GitHub: https://github.com/academiasigma/Hospital-de-Clinicas
+● Carpeta de la Entrega: /3ER ENTREGA - PROGRAMACIÓN FULL STACK
+● Visibilidad: Repositorio público / institucional para evaluación docente.
+
+================================================================================
+9. REFERENCIAS BIBLIOGRÁFICAS Y FUENTES TÉCNICAS
+================================================================================
+● Apache Friends. (2024). XAMPP: Entorno de desarrollo para Apache, MariaDB y PHP. Apache Friends Documentation. https://www.apachefriends.org/es/index.html
+● Chacon, S., & Straub, B. (2014). Pro Git: Everything you need to know about Git (2.ª ed.). Apress. https://git-scm.com/book/en/v2
+● Docker Inc. (2024). Docker Documentation: Dockerfile reference and Compose file reference. https://docs.docker.com/
+● Elmasri, R., & Navathe, S. B. (2016). Fundamentos de sistemas de bases de datos (7.ª ed.). Pearson Educación.
+● MariaDB Foundation. (2024). MariaDB Knowledge Base: SQL Statements & Structure. https://mariadb.com/kb/en/
+● Mozilla Developer Network (MDN). (2024). Fetch API: Peticiones asíncronas e intercambio de datos. MDN Web Docs. https://developer.mozilla.org/es/docs/Web/API/Fetch_API
+● Mozilla Developer Network (MDN). (2024). Manipulación del Document Object Model (DOM) en JavaScript. MDN Web Docs. https://developer.mozilla.org/es/docs/Web/API/Document_Object_Model
+● Mozilla Developer Network (MDN). (2024). Diseño responsivo y maquetación con CSS Grid y Flexbox. MDN Web Docs. https://developer.mozilla.org/es/docs/Learn/CSS/CSS_layout/Grids
+● Oracle Corporation. (2024). MySQL 8.0 Reference Manual: The InnoDB Storage Engine and Foreign Key Constraints. MySQL Documentation. https://dev.mysql.com/doc/refman/8.0/en/innodb-storage-engine.html
+● Pressman, R. S., & Maxim, B. R. (2020). Ingeniería del software: Un enfoque práctico (9.ª ed.). McGraw-Hill Interamericana.
+● The PHP Documentation Group. (2024). PHP Manual: Objetos de Datos de PHP (PDO) y sentencias preparadas. PHP.net. https://www.php.net/manual/es/book.pdo.php
+● The PHP Documentation Group. (2024). PHP Manual: Funciones seguras de hash criptográfico de contraseñas (BCRYPT). PHP.net. https://www.php.net/manual/es/ref.password.php
+● The PHP Documentation Group. (2024). PHP Manual: Manejo de sesiones y ciclo de vida de $_SESSION. PHP.net. https://www.php.net/manual/es/book.session.php
+
+================================================================================
+10. HOJA TESTIGO E INTEGRANTES
+================================================================================
+Al final de nuestra documentación, adjuntamos la Hoja Testigo requerida por las pautas formales de la UTU, detallando las firmas de cada integrante del grupo:
+
+GUEDIKIAN FACUNDO                     ROBAINA IHOJAN
+______________________                ______________________
+COORDINADOR                           SUBCOORDINADOR
+
+GOMEZ EZEQUIEL                        CHAITELLE NICOLAS
+______________________                ______________________
+INTEGRANTE 1                          INTEGRANTE 2
+
+I.S.B.O 3MN
