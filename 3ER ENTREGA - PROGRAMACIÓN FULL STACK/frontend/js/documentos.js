@@ -533,8 +533,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     };
 
-    const cargarResultadosEncuestas = async () => {
-        contenedorResultadosEncuestas.innerHTML = '<p class="text-center">Consultando resultados...</p>';
+    const cargarResultadosEncuestas = async (preservarScroll = true) => {
+        const scrollPrevio = window.scrollY;
+        if (!preservarScroll || !contenedorResultadosEncuestas.children.length) {
+            contenedorResultadosEncuestas.innerHTML = '<p class="text-center">Consultando resultados...</p>';
+        }
         const idCat = parseInt(selectFiltroEncuestaCategoria.value, 10);
         const qs = idCat > 0 ? `&id_categoria=${idCat}` : '';
 
@@ -579,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     : (enc.estado === 'Borrador' ? 'background:#fef3c7; color:#92400e;' : 'background:#fee2e2; color:#991b1b;');
 
                 return `
-                    <article class="encuesta-card">
+                    <article class="encuesta-card" id="encuesta-card-${esc(enc.id_encuesta)}">
                         <div class="encuesta-header">
                             <div>
                                 <span class="badge badge-publico">${esc(enc.categoria_nombre)}</span>
@@ -598,13 +601,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </article>
                 `;
             }).join('');
+
+            if (preservarScroll) {
+                window.scrollTo({ top: scrollPrevio, behavior: 'instant' });
+            }
         } catch (err) {
             contenedorResultadosEncuestas.innerHTML = `<p class="text-center" style="color:#b91c1c;">${esc(err.message)}</p>`;
         }
     };
 
-    selectFiltroEncuestaCategoria.addEventListener('change', cargarResultadosEncuestas);
-    btnRefrescarEncuestas.addEventListener('click', cargarResultadosEncuestas);
+    selectFiltroEncuestaCategoria.addEventListener('change', () => cargarResultadosEncuestas(false));
+    btnRefrescarEncuestas.addEventListener('click', () => cargarResultadosEncuestas(true));
 
     // Modales de administración de encuestas y preguntas
     if (btnAbrirModalNuevaEncuesta) {

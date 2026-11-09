@@ -254,7 +254,7 @@ class Encuesta {
         if ($id_categoria !== null && $id_categoria > 0) {
             $sql .= " WHERE e.id_categoria = :id_categoria";
         }
-        $sql .= " ORDER BY e.id_encuesta ASC";
+        $sql .= " ORDER BY e.id_encuesta DESC";
 
         $stmt = $this->conexion->prepare($sql);
         if ($id_categoria !== null && $id_categoria > 0) {
