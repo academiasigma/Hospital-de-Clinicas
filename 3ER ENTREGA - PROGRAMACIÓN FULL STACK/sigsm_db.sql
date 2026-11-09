@@ -4,7 +4,7 @@ DROP DATABASE IF EXISTS sigsm_hospital;
 CREATE DATABASE sigsm_hospital CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE sigsm_hospital;
 
--- SECCIÓN 1: TABLAS MAESTRAS Y LAS INDEPENDIENTES
+-- tablas principales
 
 CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT,
@@ -74,7 +74,7 @@ CREATE TABLE categoria (
     CONSTRAINT CS_categoria_nombre UNIQUE (nombre)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- SECCIÓN 2: ENTIDADES TRANSACCIONALES Y DE SOPORTE OPERATIVO
+-- tablas con claves foraneas
 
 CREATE TABLE documento (
     id_documento INT AUTO_INCREMENT,
@@ -168,16 +168,15 @@ CREATE TABLE traslado (
     CONSTRAINT CE_traslado_enfermero FOREIGN KEY (id_enfermero) REFERENCES enfermero(id_enfermero) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT CE_traslado_paciente FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT CE_traslado_objeto FOREIGN KEY (id_objeto) REFERENCES objeto(id_objeto) ON DELETE RESTRICT ON UPDATE CASCADE,
-    -- RNE03 (paciente u objeto, nunca ambos) se valida en la capa de negocio (Traslado.php): MariaDB no permite CHECK sobre columnas con FK ON UPDATE CASCADE.
-    -- RNE01: coherencia cronologica hora_salida < hora_efectiva_llegada <= hora_retorno
+    -- validamos que las horas de llegada y retorno sean posteriores a la salida
     CONSTRAINT CK_traslado_cronologia CHECK (hora_estimada_llegada > hora_salida AND (hora_efectiva_llegada IS NULL OR hora_efectiva_llegada > hora_salida) AND (hora_retorno IS NULL OR hora_efectiva_llegada IS NULL OR hora_retorno >= hora_efectiva_llegada))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- SECCIÓN 3: SCRIPT DML (los datos de Prueba Iniciales)
+-- datos de prueba iniciales
 
--- insert de los usuarios iniciales con los roles del sistema
--- Clave de prueba: "password" encriptada con password_hash
+-- usuarios iniciales con los roles del sistema
+-- contrasenia de prueba: "password" encriptada con password_hash
 INSERT INTO usuario (email, nombre, contrasenia, rol, estado) VALUES 
 ('superadmin@hc.edu.uy', 'SuperAdmin IT', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo'),
 ('gestor@hc.edu.uy', 'Gestor Integral', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'GESTOR_INTEGRAL', 'Activo'),
@@ -185,7 +184,7 @@ INSERT INTO usuario (email, nombre, contrasenia, rol, estado) VALUES
 ('division@hc.edu.uy', 'Usuario Division', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'USUARIO_DIVISION', 'Activo'),
 ('academiasigma@hc.edu.uy', 'Academia Sigma', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo');
 
--- Insert de categorías médicas
+-- categorias medicas
 INSERT INTO categoria (nombre) VALUES 
 ('Indicaciones Médicas y Quirúrgicas'),
 ('Preparación para Estudios'),
@@ -193,7 +192,7 @@ INSERT INTO categoria (nombre) VALUES
 ('Encuestas de Satisfacción'),
 ('Protocolos de Prevención');
 
--- Recursos de prueba
+-- choferes, enfermeros y vehiculos de prueba
 INSERT INTO chofer (nombre, telefono, licencia) VALUES 
 ('Carlos Rodríguez', '099123456', 'LIC-CH-001'),
 ('Mario Gómez', '098765432', 'LIC-CH-002'),
@@ -211,51 +210,51 @@ INSERT INTO vehiculo (tipo_vehiculo, matricula, estado) VALUES
 ('Ambulancia', 'SCA-1001', 'Disponible'),
 ('Auto', 'SCA-2002', 'Disponible');
 
--- Pacientes de prueba (algunas cédulas para pruebas)
+-- pacientes de prueba
 INSERT INTO paciente (documento, nombre, telefono, fecha_de_nacimiento, requiere_oxigeno, requiere_camilla, requiere_aislamiento, se_maneja_por_sus_medios) VALUES 
 ('57327104', 'Facundo Guedikian', '099111222', '1995-01-01', 0, 0, 0, 1),
 ('57915575', 'Ihojan Robaina', '099222333', '1996-02-02', 0, 0, 0, 1),
 ('57516640', 'Ezequiel Gomez', '099333444', '1997-03-03', 0, 0, 0, 1),
 ('57700578', 'Nicolas Chaitelle', '099444555', '1998-04-04', 0, 0, 0, 1);
 
--- Objetos de prueba (Módulo de Traslados y ambulancias)
+-- objetos de prueba para traslados
 INSERT INTO objeto (nombre, caracteristicas, tipo_objeto) VALUES 
 ('Órgano: Corazón para Trasplante', 'Caja térmica refrigerada, transporte urgente, prioridad alta', 'organo'),
 ('Muestra Biológica: Biopsia urgente', 'Tubo refrigerado para laboratorio de patología', 'muestra_biologica'),
 ('Insumos: Medicamentos Oncológicos', 'Caja sellada para farmacia, mantener en temperatura fresca', 'insumo_medico');
 
--- Documentos clínicos iniciales
+-- documentos clinicos iniciales
 INSERT INTO documento (titulo, archivo, id_usuario, id_categoria) VALUES 
 ('Indicaciones de interrupción voluntaria del embarazo', 'uploads/documentos/ive_indicaciones.pdf', 1, 1),
 ('Preparación para ecocardiograma transesofágico', 'uploads/documentos/ecocardiograma_prep.pdf', 1, 2),
 ('Plan de alta de enfermería en Nefrología', 'uploads/documentos/nefrologia_alta.pdf', 1, 3);
 
--- Encuestas activas de prueba (Módulo de Satisfacción del Paciente)
+-- encuestas activas de prueba
 INSERT INTO encuesta (id_encuesta, comentarios, estado, id_categoria) VALUES 
 (1, 'Encuesta del Área Ginecología/IVE', 'Activa', 1),
 (2, 'Encuesta del Área Estudios Imagenológicos', 'Activa', 2),
 (3, 'Encuesta del Área Enfermería y Trasplantes', 'Activa', 3);
 
--- PREGUNTAS ASOCIADAS A LA ENCUESTA 1 (Categoría 1)
+-- preguntas de la encuesta 1
 INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
 (1, '¿La información provista en la guía clínica fue clara y fácil de entender?', 'Si/No', 1),
 (2, 'Califique la calidad de la atención médica recibida durante su consulta:', 'Escala_1_5', 1),
 (3, 'Sugerencias o comentarios adicionales para mejorar este instructivo:', 'Texto Libre', 1);
 
--- PREGUNTAS ASOCIADAS A LA ENCUESTA 2 (Categoría 2)
+-- preguntas de la encuesta 2
 INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
 (4, '¿Le resultó sencillo seguir las indicaciones de ayuno y preparación para su estudio?', 'Si/No', 2),
 (5, 'Califique la amabilidad y el respeto mostrado por el personal técnico:', 'Escala_1_5', 2),
 (6, 'Deje sus comentarios sobre su experiencia general de preparación:', 'Texto Libre', 2);
 
--- PREGUNTAS ASOCIADAS A LA ENCUESTA 3 ( Categoría 3)
+-- preguntas de la encuesta 3
 INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES 
 (7, '¿La explicación de los cuidados post-alta domiciliaria por parte del enfermero fue clara?', 'Si/No', 3),
 (8, 'Califique la preparación técnica y el trato brindado por el personal de enfermería:', 'Escala_1_5', 3),
 (9, 'Escriba aquí sus observaciones o sugerencias para mejorar el plan de alta:', 'Texto Libre', 3);
 
--- SECCION 4: USUARIOS DE BASE DE DATOS CON DISTINTOS PRIVILEGIOS
--- Se recrea sigsm_app para garantizar que tanto en Docker como en XAMPP/CentOS tenga unicamente permisos DML
+-- usuarios de la base de datos y sus permisos
+-- usuario de la aplicacion con permisos solo para consultar y modificar datos
 DROP USER IF EXISTS 'sigsm_app'@'%';
 DROP USER IF EXISTS 'sigsm_app'@'localhost';
 CREATE USER 'sigsm_app'@'%' IDENTIFIED BY 'Hc1234_db';
@@ -263,7 +262,7 @@ CREATE USER 'sigsm_app'@'localhost' IDENTIFIED BY 'Hc1234_db';
 GRANT SELECT, INSERT, UPDATE, DELETE ON sigsm_hospital.* TO 'sigsm_app'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON sigsm_hospital.* TO 'sigsm_app'@'localhost';
 
--- Usuario administrador: control total sobre la base de datos
+-- usuario administrador de la base de datos
 CREATE USER IF NOT EXISTS 'sigsm_admin'@'%' IDENTIFIED BY 'Hc1234_admin';
 CREATE USER IF NOT EXISTS 'sigsm_admin'@'localhost' IDENTIFIED BY 'Hc1234_admin';
 GRANT ALL PRIVILEGES ON sigsm_hospital.* TO 'sigsm_admin'@'%';

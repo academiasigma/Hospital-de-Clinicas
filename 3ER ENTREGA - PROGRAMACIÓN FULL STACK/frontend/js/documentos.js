@@ -1,13 +1,7 @@
-/**
- * Módulo de Documentación Clínica, Categorías y Resultados de Encuestas de Satisfacción.
- * Consume los endpoints REST con métodos HTTP adecuados:
- *   - Documentos: GET /api/documentos, POST /api/documentos, PUT /api/documentos/{id}, DELETE /api/documentos/{id}
- *   - Categorías: GET /api/categorias, POST /api/categorias, PUT /api/categorias/{id}, DELETE /api/categorias/{id}
- *   - Encuestas:  GET /api/encuestas/resultados
- */
+// logica del modulo de documentos, categorias y encuestas
 document.addEventListener('DOMContentLoaded', async () => {
     const API = '../../api';
-    const TAMANO_MAXIMO = 10 * 1024 * 1024; // 10 MB (igual que en Ejemplo2 de clase)
+    const TAMANO_MAXIMO = 10 * 1024 * 1024; // 10 mb
 
     const usuario = await window.authPromise;
     if (!usuario) return;
@@ -15,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const puedeEscribirDocs = ['SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'USUARIO_DIVISION'].includes(usuario.rol);
     const puedeGestionarCategorias = ['SUPERADMIN_IT', 'GESTOR_INTEGRAL'].includes(usuario.rol);
 
-    // ---------------------------------------------------------------- Selectores
+    // selectores del dom
     const $ = (sel) => document.querySelector(sel);
     const cajaAlerta = $('#alerta');
 
@@ -34,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectCategoriaEditForm = $('#edit_id_categoria');
     const btnActualizarDocumento = $('#btnActualizarDocumento');
 
-    // Categorías CRUD
+    // elementos de categorias
     const formCategoria = $('#formCategoria');
     const inputCatId = $('#cat_id');
     const inputCatNombre = $('#cat_nombre');
@@ -42,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnCancelarCategoria = $('#btnCancelarCategoria');
     const tablaCategoriasCuerpo = $('#tablaCategoriasCuerpo');
 
-    // Encuestas
+    // elementos de encuestas
     const selectFiltroEncuestaCategoria = $('#selectFiltroEncuestaCategoria');
     const btnRefrescarEncuestas = $('#btnRefrescarEncuestas');
     const btnAbrirModalNuevaEncuesta = $('#btnAbrirModalNuevaEncuesta');
@@ -71,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnAbrirModalNuevaEncuesta.classList.add('seccion-oculta');
     }
 
-    // ---------------------------------------------------------------- Utilidades
+    // funciones auxiliares
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -92,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return null;
     };
 
-    // ---------------------------------------------------------------- Pestañas del módulo
+    // cambio de pestañas entre documentos, categorias y encuestas
     document.querySelectorAll('.tab-modulo-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-modulo-btn').forEach((b) => b.classList.remove('active'));
@@ -109,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // ---------------------------------------------------------------- Categorías (CRUD)
+    // abm de categorias
     const poblarSelectoresCategorias = () => {
         const valorFiltroActual = selectFiltroCategoria.value || '0';
         const valorFiltroEncActual = selectFiltroEncuestaCategoria.value || '0';
@@ -249,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // ---------------------------------------------------------------- Documentos (CRUD)
+    // abm de documentos
     const renderizarTabla = () => {
         const busqueda = inputBuscar.value.toLowerCase().trim();
         const categoriaId = parseInt(selectFiltroCategoria.value, 10);
@@ -309,7 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Alta de documento: POST /api/documentos (multipart/form-data)
+    // subir un documento nuevo
     formAltaDocumento.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -356,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Edición de documento: PUT /api/documentos/{id} con JSON (o multipart si se reemplaza el archivo adjunto)
+    // editar un documento existente
     formEditarDocumento.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -419,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Eliminar (DELETE /api/documentos/{id}) o abrir modal de edición
+    // botones de editar y eliminar en la tabla de documentos
     tablaCuerpo.addEventListener('click', async (e) => {
         if (e.target.classList.contains('btn-delete')) {
             const id = e.target.dataset.id;
@@ -456,7 +450,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // ---------------------------------------------------------------- Resultados y Gestión de Encuestas
+    // resultados y abm de encuestas
     const renderizarPreguntaResultado = (p, idEncuesta) => {
         const accionesPregunta = puedeGestionarCategorias
             ? `<div style="display:flex; gap:0.35rem; flex-shrink:0;">
@@ -782,7 +776,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // ---------------------------------------------------------------- Eventos de modales y filtros
+    // eventos de los modales y filtros
     inputBuscar.addEventListener('input', renderizarTabla);
     selectFiltroCategoria.addEventListener('change', renderizarTabla);
 

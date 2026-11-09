@@ -192,9 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarEncuestasActivas();
     });
 
-    // LOGICA DE ENCUESTAS DE SATISFACCION DINÁMICAS
+    // logica de las encuestas de satisfaccion
     
-    // Objeto para almacenar las respuestas temporales de los botones de escala
+    // guarda las respuestas temporales de los botones del 1 al 5
     let respuestasEscala = {};
 
     const abrirEncuesta = async (idCategoria, catNombre, idEncuestaEspecifica = 0) => {
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Manejar los clicks en el botón de encuestas (en documentos o en la sección de encuestas activas)
+    // botones de los documentos y de las encuestas activas
     documentsGrid.addEventListener('click', (e) => {
         if (e.target.classList.contains('btn-survey-trigger')) {
             const idCat = e.target.dataset.categoria;
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Escuchar selección de botones de la Escala 1-5 (Delegación de eventos)
+    // seleccion de los botones de la escala del 1 al 5
     surveyQuestionsContainer.addEventListener('click', (e) => {
         if (e.target.classList.contains('scale-item-btn')) {
             const btn = e.target;

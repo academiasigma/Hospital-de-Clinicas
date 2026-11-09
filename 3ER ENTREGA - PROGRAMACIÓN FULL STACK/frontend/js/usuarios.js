@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // 4. Modal de Alta: Abrir y Cerrar
+    // abrir y cerrar el modal de alta
     btnAbrirModalAlta.addEventListener('click', () => {
         formAltaUsuario.reset();
         modalAlta.classList.remove('oculta');
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCerrarModalAlta.addEventListener('click', cerrarModalAlta);
     btnCancelarModalAlta.addEventListener('click', cerrarModalAlta);
 
-    // 5. Submit del formulario de alta (POST asíncrono)
+    // envio del formulario de alta
     formAltaUsuario.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Modal de Edición: Abrir, Rellenar y Cerrar
+    // abrir y cerrar el modal de edicion
     const cerrarModalEditar = () => {
         modalEditar.classList.add('oculta');
         formEditarUsuario.reset();
@@ -220,9 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCerrarModalEditar.addEventListener('click', cerrarModalEditar);
     btnCancelarModalEditar.addEventListener('click', cerrarModalEditar);
 
-    // Delegación de clicks (Editar y Eliminar)
+    // botones de editar y eliminar de la tabla
     tablaCuerpo.addEventListener('click', async (e) => {
-        // Click en Editar
+        // boton editar
         if (e.target.classList.contains('btn-edit-usuario')) {
             const id = parseInt(e.target.dataset.id, 10);
             const user = usuariosList.find(u => u.id_usuario === id);
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 editIdUsuario.value = user.id_usuario;
                 editNombre.value = user.nombre;
                 editEmail.value = user.email;
-                editContrasenia.value = ''; //en blanco por defecto
+                editContrasenia.value = ''; // en blanco por defecto
                 editRol.value = user.rol;
                 editEstado.value = user.estado;
                 
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Click en Eliminar
+        // boton eliminar
         if (e.target.classList.contains('btn-eliminar-usuario')) {
             const id = e.target.dataset.id;
             const nombre = e.target.dataset.nombre;
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Submit del formulario de Edición (POST asíncrono)
+    // envio del formulario de edicion
     formEditarUsuario.addEventListener('submit', async (e) => {
         e.preventDefault();
 
