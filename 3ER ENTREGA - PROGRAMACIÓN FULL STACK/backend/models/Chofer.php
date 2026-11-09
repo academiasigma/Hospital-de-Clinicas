@@ -21,11 +21,4 @@ class Chofer extends Recurso {
         }
         return $errores;
     }
-
-    public function obtenerPorLicencia(string $licencia): ?array {
-        $stmt = $this->bd->prepare("SELECT * FROM chofer WHERE UPPER(TRIM(licencia)) = UPPER(TRIM(:lic)) LIMIT 1");
-        $stmt->execute(['lic' => $licencia]);
-        $fila = $stmt->fetch();
-        return $fila ?: null;
-    }
 }

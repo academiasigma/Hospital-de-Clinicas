@@ -16,39 +16,17 @@
         </header>
 
         <main class="mobile-container">
-            <!-- Acceso directo por Licencia de Conducir cuando el chofer ingresa desde el Login -->
-            <section id="loginChoferBox" class="card select-driver-card oculta">
-                <label for="inputLicenciaChofer"><strong>Ingreso de Chofer en Turno</strong></label>
-                <p style="font-size: 0.8rem; color: #64748b; margin: 0.35rem 0 0.6rem;">
-                    Ingrese su número de licencia de conducir registrada en el hospital para ver su hoja de ruta:
-                </p>
-                <form id="formLoginChofer" style="display:flex; flex-direction:column; gap:0.5rem;">
-                    <input type="text" id="inputLicenciaChofer" placeholder="Ej: LIC-CH-001" required style="padding:0.65rem; border:1px solid #cbd5e1; border-radius:6px; font-size:0.95rem;">
-                    <div id="chipsChoferesDemo" style="display:flex; flex-wrap:wrap; gap:0.35rem;"></div>
-                    <div id="msgLoginChofer" style="color:#b91c1c; font-size:0.82rem;"></div>
-                    <button type="submit" class="btn-mobile btn-mobile-primary">Ingresar a mi Terminal</button>
-                    <a href="../index.html" class="btn-mobile" style="text-align:center; text-decoration:none; display:block;">← Volver al Acceso Principal</a>
-                </form>
-            </section>
-
-            <!-- Cabecera de chofer identificado / selector de supervisión -->
-            <section id="panelChoferIdentificado" class="card select-driver-card oculta">
-                <div id="bloqueSelectorSupervisor">
-                    <label for="selectChoferActivo"><strong>Chofer en Turno (Vista Supervisión):</strong></label>
-                    <select id="selectChoferActivo"></select>
-                </div>
-                <div id="bloqueDatosChoferDirecto" class="oculta" style="margin-bottom:0.35rem;">
-                    <strong id="txtChoferDirectoNombre" style="font-size:1rem; color:#0f172a;"></strong><br>
-                    <small style="color:#0284c7; font-weight:600;">Licencia: <span id="txtChoferDirectoLicencia"></span></small>
-                </div>
-                <small style="color:#64748b; display:block; margin-top:0.25rem;">Sesión: <span id="txtNombre">...</span> <span id="txtRol" class="oculta"></span></small>
+            <section class="card select-driver-card">
+                <label for="selectChoferActivo"><strong>Identificarse como Chofer:</strong></label>
+                <select id="selectChoferActivo"></select>
+                <small style="color:#64748b;">Sesión: <span id="txtNombre">...</span> <span id="txtRol" class="oculta"></span></small>
                 <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                    <a id="btnVolverTraslados" href="ambulancias.html" class="btn-mobile oculta" style="text-align:center; text-decoration:none; flex:1;">← Gestión Traslados</a>
+                    <a href="ambulancias.html" class="btn-mobile" style="text-align:center; text-decoration:none; flex:1;">← Volver a Traslados</a>
                     <button id="btnCerrarSesion" class="btn-mobile" style="flex:1;">Cerrar Sesión</button>
                 </div>
             </section>
 
-            <div id="sinViajeBox" class="card text-center py-4 oculta">
+            <div id="sinViajeBox" class="card text-center py-4">
                 <div class="no-travel-spinner"></div>
                 <h4 style="margin-top: 1rem; color: #475569;">Sin viajes asignados</h4>
                 <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Cuando el área de transporte asigne un traslado a este chofer aparecerá aquí.</p>
@@ -105,6 +83,7 @@
         </footer>
     </div>
 
+    <script src="../js/auth.js"></script>
     <script src="../js/ambulancias-chofer.js"></script>
 </body>
 </html>

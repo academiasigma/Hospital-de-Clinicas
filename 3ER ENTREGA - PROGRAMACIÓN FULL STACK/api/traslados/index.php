@@ -26,13 +26,6 @@ $responderErrorModelo = function () use ($traslado) {
 };
 
 if ($metodo === 'GET') {
-    // Permite consultar viajes propios al chofer autenticado en la Terminal Móvil
-    if (!Auth::verificarAutenticacion() && !empty($_SESSION['chofer']['id_chofer'])) {
-        $filtrosChofer = ['id_chofer' => (int)$_SESSION['chofer']['id_chofer']];
-        $filas = $traslado->listar($filtrosChofer, null);
-        Api::responder(200, ['status' => 'ok', 'total' => count($filas), 'datos' => $filas]);
-    }
-
     Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION']);
     $rol = $_SESSION['usuario']['rol'];
     // Un usuario de división solo ve las solicitudes que él creó.
@@ -76,22 +69,13 @@ if ($metodo === 'POST') {
     Api::responder(201, ['status' => 'ok', 'mensaje' => 'Traslado registrado.', 'id' => $nuevoId]);
 }
 
+// PUT y DELETE: solo el área de transporte y el administrador TI.
+Api::exigirRol(ROLES_TRANSPORTE);
 if ($id === null) {
     Api::error(400, 'Debe indicar el id del traslado en la URL.');
 }
 
 if ($metodo === 'PUT' && $accion === 'estado') {
-    // Permite cambiar estado del viaje tanto a Supervisores de Transporte como al Chofer asignado a ese traslado
-    $esChoferDirecto = !Auth::verificarAutenticacion() && !empty($_SESSION['chofer']['id_chofer']);
-    if ($esChoferDirecto) {
-        $actual = $traslado->obtenerPorId($id);
-        if ($actual === null || (int)($actual['id_chofer'] ?? 0) !== (int)$_SESSION['chofer']['id_chofer']) {
-            Api::error(403, 'Solo puede actualizar el estado de los viajes asignados a su licencia.');
-        }
-    } else {
-        Api::exigirRol(ROLES_TRANSPORTE);
-    }
-
     $datos = Api::entrada();
     $nuevoEstado = trim((string)($datos['estado'] ?? ''));
     if ($nuevoEstado === '') {
@@ -103,9 +87,6 @@ if ($metodo === 'PUT' && $accion === 'estado') {
     }
     Api::responder(200, ['status' => 'ok', 'mensaje' => "Estado actualizado a $nuevoEstado."]);
 }
-
-// PUT general y DELETE: solo el área de transporte y el administrador TI.
-Api::exigirRol(ROLES_TRANSPORTE);
 
 if ($metodo === 'PUT') {
     if (!$traslado->actualizar($id, Api::entrada())) {
