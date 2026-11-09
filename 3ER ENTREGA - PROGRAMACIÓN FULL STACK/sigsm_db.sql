@@ -1,5 +1,6 @@
 
--- La base sigsm_hospital la crea el contenedor MariaDB (MYSQL_DATABASE) con el usuario sigsm_app.
+DROP DATABASE IF EXISTS sigsm_hospital;
+CREATE DATABASE sigsm_hospital CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE sigsm_hospital;
 
 -- SECCIÓN 1: TABLAS MAESTRAS Y LAS INDEPENDIENTES
@@ -252,11 +253,18 @@ INSERT INTO pregunta (id_pregunta, enunciado, tipo, id_encuesta) VALUES
 (9, 'Escriba aquí sus observaciones o sugerencias para mejorar el plan de alta:', 'Texto Libre', 3);
 
 -- SECCION 4: USUARIOS DE BASE DE DATOS CON DISTINTOS PRIVILEGIOS
--- sigsm_app (usuario de aplicacion) lo crea el contenedor; se restringe a operaciones DML.
--- El entrypoint de la imagen concede ALL sobre el patron `sigsm\_hospital`; se quita y se concede solo DML.
-REVOKE ALL PRIVILEGES ON `sigsm\_hospital`.* FROM 'sigsm_app'@'%';
+-- Se recrea sigsm_app para garantizar que tanto en Docker como en XAMPP/CentOS tenga unicamente permisos DML
+DROP USER IF EXISTS 'sigsm_app'@'%';
+DROP USER IF EXISTS 'sigsm_app'@'localhost';
+CREATE USER 'sigsm_app'@'%' IDENTIFIED BY 'Hc1234_db';
+CREATE USER 'sigsm_app'@'localhost' IDENTIFIED BY 'Hc1234_db';
 GRANT SELECT, INSERT, UPDATE, DELETE ON sigsm_hospital.* TO 'sigsm_app'@'%';
--- sigsm_admin (administrador del sistema): control total sobre la base.
+GRANT SELECT, INSERT, UPDATE, DELETE ON sigsm_hospital.* TO 'sigsm_app'@'localhost';
+
+-- Usuario administrador: control total sobre la base de datos
 CREATE USER IF NOT EXISTS 'sigsm_admin'@'%' IDENTIFIED BY 'Hc1234_admin';
+CREATE USER IF NOT EXISTS 'sigsm_admin'@'localhost' IDENTIFIED BY 'Hc1234_admin';
 GRANT ALL PRIVILEGES ON sigsm_hospital.* TO 'sigsm_admin'@'%';
+GRANT ALL PRIVILEGES ON sigsm_hospital.* TO 'sigsm_admin'@'localhost';
+
 FLUSH PRIVILEGES;

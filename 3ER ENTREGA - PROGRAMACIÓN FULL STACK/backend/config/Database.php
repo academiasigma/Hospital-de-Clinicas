@@ -19,29 +19,38 @@ class Database {
     }
 
     // Obtiene y retorna la instancia activa de la conexión PDO.
+    // Intenta primero el host principal (CentOS 192.168.1.234) y tiene respaldo automático a Docker local (sigsm_mariadb) y XAMPP (127.0.0.1).
     public function conectar(): ?PDO {
         $this->conexion = null;
+        $hostsCandidatos = array_values(array_unique([$this->host, 'sigsm_mariadb', '127.0.0.1']));
+        $ultimoError = null;
 
-        try {
-            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset=utf8mb4";
-            $opciones = [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,
-            ];
+        foreach ($hostsCandidatos as $hostActual) {
+            try {
+                $dsn = "mysql:host={$hostActual};port={$this->port};dbname={$this->db_name};charset=utf8mb4";
+                $opciones = [
+                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES   => false,
+                    PDO::ATTR_TIMEOUT            => 2,
+                ];
 
-            $this->conexion = new PDO($dsn, $this->username, $this->password, $opciones);
-        } catch (PDOException $e) {
-            // No se expone $e->getMessage() al cliente (puede filtrar host/usuario); se registra en el log.
-            error_log('Error de conexión a la base de datos: ' . $e->getMessage());
-            http_response_code(500);
-            echo json_encode([
-                'status'  => 'error',
-                'mensaje' => 'Error de conexión a la base de datos.'
-            ]);
-            exit;
+                $this->conexion = new PDO($dsn, $this->username, $this->password, $opciones);
+                return $this->conexion;
+            } catch (PDOException $e) {
+                $ultimoError = $e;
+            }
         }
 
-        return $this->conexion;
+        // No se expone $ultimoError->getMessage() al cliente (puede filtrar host/usuario); se registra en el log.
+        if ($ultimoError !== null) {
+            error_log('Error de conexión a la base de datos: ' . $ultimoError->getMessage());
+        }
+        http_response_code(500);
+        echo json_encode([
+            'status'  => 'error',
+            'mensaje' => 'Error de conexión a la base de datos.'
+        ]);
+        exit;
     }
 }
