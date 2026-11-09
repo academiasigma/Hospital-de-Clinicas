@@ -214,7 +214,7 @@ Proyecto desarrollado por los estudiantes de **3° MN — UTU Instituto Superior
 | **Integrante 2** | Nicolás Chaitelle | `nicolaschaitelleyapor@gmail.com` |
 
 * **Docente de Programación Full Stack:** Prof. Carlos Romero
-* **Repositorio Oficial:** [https://github.com/academiasigma/Hospital-de-Clinicas](https://github.com/academiasigma/Hospital-de-Clinicas)
+* **Repositorio Oficial:** [https://github.com/academiasigma/Hospital-de-Clinicas]
 
 ---
 
