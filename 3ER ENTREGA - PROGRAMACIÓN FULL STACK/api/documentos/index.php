@@ -3,25 +3,15 @@
 require_once __DIR__ . '/../../backend/config/Api.php';
 require_once __DIR__ . '/../../backend/models/Documento.php';
 
-/**
- * Endpoint REST de documentos clínicos (/api/documentos y /api/documentos/{id}):
- *   GET    /api/documentos[?id_categoria=] -> listado
- *   GET    /api/documentos/{id}            -> detalle de un documento
- *   POST   /api/documentos                 -> alta (multipart/form-data con archivo, o reemplazo de archivo si viene _method=PUT)
- *   PUT    /api/documentos/{id}            -> edición de metadatos (application/json: titulo, id_categoria)
- *   DELETE /api/documentos/{id}            -> eliminación física y lógica
- *
- * Siguiendo el estándar de Ejemplo2 de clase, se valida el tamaño máximo (10 MB),
- * el tipo MIME real con finfo_file() y la firma del archivo (%PDF- en caso de PDF).
- */
+// api para gestionar los documentos clinicos
 header('X-Content-Type-Options: nosniff');
 
 $metodo = Api::iniciar(['GET', 'POST', 'PUT', 'DELETE']);
 $id = Api::idDeLaUrl();
 $modelo = new Documento();
-$tamanoMaximo = 10 * 1024 * 1024; // 10 MB
+$tamanoMaximo = 10 * 1024 * 1024; // 10 mb
 
-// Auxiliar para validar y guardar un archivo subido en $_FILES['archivo']
+// funcion para validar y guardar el archivo que se sube
 $procesarArchivoSubido = function (array $archivo) use ($tamanoMaximo): string {
     if ($archivo['error'] !== UPLOAD_ERR_OK) {
         Api::error(400, 'Debe adjuntar un archivo válido (PDF o Imagen).');
@@ -40,7 +30,7 @@ $procesarArchivoSubido = function (array $archivo) use ($tamanoMaximo): string {
         Api::error(400, 'Formato no permitido. Solo se aceptan PDF, JPG o PNG.');
     }
 
-    // Validación de tipo MIME real e inspección de firma binaria (como en Ejemplo2 de clase)
+    // verificamos el tipo mime real del archivo y que empiece como pdf
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $tipoMime = finfo_file($finfo, $archivo['tmp_name']);
     finfo_close($finfo);
@@ -73,7 +63,7 @@ $procesarArchivoSubido = function (array $archivo) use ($tamanoMaximo): string {
     return 'uploads/documentos/' . $nombreArchivoGuardado;
 };
 
-// GET: listado general o detalle por ID
+// devuelve el listado de documentos o uno por su id
 if ($metodo === 'GET') {
     if ($id !== null) {
         $doc = $modelo->obtenerPorId($id);
@@ -95,10 +85,10 @@ if ($metodo === 'GET') {
     ]);
 }
 
-// Operaciones de escritura requieren sesión activa y rol con permisos de gestión documental
+// validamos que tenga permisos para crear, editar o borrar documentos
 Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'USUARIO_DIVISION']);
 
-// Si es POST pero incluye id en la URL o _method=PUT (usado cuando se reemplaza el archivo adjunto por multipart/form-data)
+// si viene por post pero tiene id es porque se esta editando el documento con archivo nuevo
 if ($metodo === 'POST' && ($id !== null || strtoupper($_POST['_method'] ?? '') === 'PUT' || !empty($_POST['id_documento']))) {
     $idEditar = $id ?? (int)($_POST['id_documento'] ?? 0);
     if ($idEditar <= 0 || $modelo->obtenerPorId($idEditar) === null) {
@@ -127,7 +117,7 @@ if ($metodo === 'POST' && ($id !== null || strtoupper($_POST['_method'] ?? '') =
     Api::responder(200, ['status' => 'ok', 'mensaje' => 'Documento modificado correctamente.']);
 }
 
-// POST: Alta de nuevo documento
+// alta de un documento nuevo
 if ($metodo === 'POST') {
     $titulo = trim($_POST['titulo'] ?? '');
     $id_categoria = isset($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : 0;
@@ -164,7 +154,7 @@ if ($metodo === 'POST') {
     Api::responder(201, ['status' => 'ok', 'mensaje' => 'Documento registrado exitosamente.']);
 }
 
-// PUT: Actualizar metadatos del documento (/api/documentos/{id}) con cuerpo JSON
+// actualizar titulo y categoria de un documento
 if ($metodo === 'PUT') {
     $datos = Api::entrada();
     $idEditar = $id ?? (int)($datos['id_documento'] ?? 0);
@@ -195,7 +185,7 @@ if ($metodo === 'PUT') {
     Api::responder(200, ['status' => 'ok', 'mensaje' => 'Documento modificado correctamente.']);
 }
 
-// DELETE: Eliminar documento (/api/documentos/{id})
+// eliminar un documento
 if ($metodo === 'DELETE') {
     $idEliminar = $id;
     if ($idEliminar === null) {

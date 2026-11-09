@@ -3,21 +3,14 @@
 require_once __DIR__ . '/../../backend/config/Api.php';
 require_once __DIR__ . '/../../backend/models/Encuesta.php';
 
-/**
- * Endpoint REST de encuestas de satisfacción y sus preguntas (/api/encuestas):
- *   GET    /api/encuestas?id_categoria={id}            -> obtiene la encuesta activa (público, portal de pacientes)
- *   GET    /api/encuestas/resultados[?id_categoria=]   -> resumen de resultados y preguntas (requiere sesión)
- *   POST   /api/encuestas                              -> guarda una resolución anónima (público) o crea encuesta/pregunta (gestión)
- *   PUT    /api/encuestas/{id}                         -> actualiza estado/título de encuesta o edita una pregunta (?recurso=pregunta)
- *   DELETE /api/encuestas/{id}?recurso=pregunta        -> elimina una pregunta de la encuesta
- */
+// api para encuestas, preguntas y respuestas de satisfaccion
 $metodo = Api::iniciar(['GET', 'POST', 'PUT', 'DELETE']);
 $id = Api::idDeLaUrl();
 $recurso = $_GET['recurso'] ?? '';
 $modelo = new Encuesta();
 
 if ($metodo === 'GET') {
-    // Modo resultados y estructura completa para funcionarios autenticados
+    // devuelve los resultados de las encuestas para los funcionarios logueados
     if (!empty($_GET['resultados']) || (($_GET['accion'] ?? '') === 'resultados')) {
         Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION']);
         $idCat = isset($_GET['id_categoria']) && is_numeric($_GET['id_categoria'])
@@ -31,19 +24,19 @@ if ($metodo === 'GET') {
         ]);
     }
 
-    // Modo portal de invitados: listar todas las encuestas activas disponibles
+    // lista todas las encuestas activas para el portal de pacientes
     if (!empty($_GET['activas'])) {
         $activas = $modelo->listarActivasPublicas();
         Api::responder(200, ['status' => 'ok', 'encuestas' => $activas]);
     }
 
-    // Modo portal de invitados: obtener una encuesta activa específica por su ID
+    // busca una encuesta activa por su id
     if (isset($_GET['id_encuesta']) && is_numeric($_GET['id_encuesta'])) {
         $encuesta = $modelo->obtenerActivaPorId((int)$_GET['id_encuesta']);
         Api::responder(200, ['status' => 'ok', 'encuesta' => $encuesta]);
     }
 
-    // Modo portal de invitados: encuesta activa para una categoría
+    // busca la encuesta activa de una categoria
     $id_categoria = isset($_GET['id_categoria']) ? (int)$_GET['id_categoria'] : 0;
     if ($id_categoria <= 0) {
         Api::error(400, 'ID de categoría no válido.');
@@ -56,7 +49,7 @@ if ($metodo === 'GET') {
 if ($metodo === 'POST') {
     $input = Api::entrada();
 
-    // Si es alta de una nueva pregunta dentro de una encuesta (administración)
+    // agregar una pregunta nueva a una encuesta
     if ($recurso === 'pregunta' || ($input['accion'] ?? '') === 'crear_pregunta') {
         Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL']);
         $id_encuesta = (int)($input['id_encuesta'] ?? 0);
@@ -71,7 +64,7 @@ if ($metodo === 'POST') {
         Api::responder(201, ['status' => 'ok', 'mensaje' => 'Pregunta agregada a la encuesta.', 'id' => $nuevoId]);
     }
 
-    // Si es alta de una nueva encuesta para una categoría (administración)
+    // crear una encuesta nueva para una categoria
     if ($recurso === 'encuesta' || ($input['accion'] ?? '') === 'crear_encuesta') {
         Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL']);
         $id_categoria = (int)($input['id_categoria'] ?? 0);
@@ -85,7 +78,7 @@ if ($metodo === 'POST') {
         Api::responder(201, ['status' => 'ok', 'mensaje' => 'Encuesta creada correctamente.', 'id' => $nuevoId]);
     }
 
-    // Caso público por defecto: enviar encuesta anónima terminada desde el Portal de Invitados
+    // guardar las respuestas que envia un paciente desde el portal
     $id_encuesta = isset($input['id_encuesta']) ? (int)$input['id_encuesta'] : 0;
     $observaciones = trim((string)($input['observaciones'] ?? ''));
     $respuestas = $input['respuestas'] ?? [];
@@ -108,7 +101,7 @@ if ($metodo === 'POST') {
     ]);
 }
 
-// PUT y DELETE requieren rol de gestión (SUPERADMIN_IT o GESTOR_INTEGRAL)
+// para editar o borrar encuestas y preguntas se pide rol de gestion o admin
 Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL']);
 if ($id === null) {
     Api::error(400, 'Debe indicar el ID en la URL.');
@@ -117,7 +110,7 @@ if ($id === null) {
 if ($metodo === 'PUT') {
     $input = Api::entrada();
 
-    // Editar pregunta existente: PUT /api/encuestas/{id_pregunta}?recurso=pregunta
+    // editar una pregunta
     if ($recurso === 'pregunta' || ($input['recurso'] ?? '') === 'pregunta') {
         $enunciado = (string)($input['enunciado'] ?? '');
         $tipo = (string)($input['tipo'] ?? '');
@@ -129,7 +122,7 @@ if ($metodo === 'PUT') {
         Api::responder(200, ['status' => 'ok', 'mensaje' => 'Pregunta actualizada correctamente.']);
     }
 
-    // Editar datos/estado de la encuesta: PUT /api/encuestas/{id_encuesta}
+    // editar datos o estado de la encuesta
     $comentarios = (string)($input['comentarios'] ?? '');
     $estado = (string)($input['estado'] ?? '');
     if (!$modelo->actualizarEncuesta($id, $comentarios, $estado)) {
@@ -138,7 +131,7 @@ if ($metodo === 'PUT') {
     Api::responder(200, ['status' => 'ok', 'mensaje' => 'Encuesta actualizada correctamente.']);
 }
 
-// DELETE /api/encuestas/{id}?recurso=pregunta  o  DELETE /api/encuestas/{id} (encuesta completa)
+// eliminar una pregunta o una encuesta
 if ($recurso === 'pregunta') {
     if (!$modelo->eliminarPregunta($id)) {
         Api::error($modelo->codigoError, $modelo->ultimoError ?: 'No se pudo eliminar la pregunta.');

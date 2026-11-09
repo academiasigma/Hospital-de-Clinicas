@@ -3,14 +3,7 @@
 require_once __DIR__ . '/../../backend/config/Api.php';
 require_once __DIR__ . '/../../backend/models/Usuario.php';
 
-/**
- * Endpoint REST de usuarios (/api/usuarios y /api/usuarios/{id}):
- *   GET    /api/usuarios       -> listar funcionarios (requiere sesión)
- *   GET    /api/usuarios/{id}  -> detalle de un funcionario
- *   POST   /api/usuarios       -> alta de funcionario (solo SUPERADMIN_IT, RNE11/RNE12)
- *   PUT    /api/usuarios/{id}  -> edición de funcionario (solo SUPERADMIN_IT, RNE11/RNE12)
- *   DELETE /api/usuarios/{id}  -> baja de funcionario (solo SUPERADMIN_IT, RNE11)
- */
+// api para listar, crear, editar y eliminar usuarios del sistema
 $metodo = Api::iniciar(['GET', 'POST', 'PUT', 'DELETE']);
 $id = Api::idDeLaUrl();
 $modelo = new Usuario();
@@ -45,7 +38,7 @@ if ($metodo === 'GET') {
     Api::responder(200, ['status' => 'ok', 'usuarios' => $datosFormateados]);
 }
 
-// RNE11: Solo SUPERADMIN_IT puede crear, editar o eliminar cuentas de usuarios
+// solo el superadmin puede crear, editar o borrar usuarios
 Api::exigirRol(['SUPERADMIN_IT']);
 
 if ($metodo === 'POST') {
@@ -66,7 +59,7 @@ if ($metodo === 'POST') {
     if (!in_array($rol, $rolesValidos, true) || !in_array($estado, $estadosValidos, true)) {
         Api::error(400, 'El rol o el estado indicado no es válido.');
     }
-    // RNE12: Unicidad de email
+    // verificamos que el email no este repetido
     if ($modelo->obtenerPorEmail($email) !== null) {
         Api::error(409, 'El correo electrónico ya se encuentra registrado.');
     }

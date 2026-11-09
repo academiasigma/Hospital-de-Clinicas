@@ -3,13 +3,7 @@
 require_once __DIR__ . '/../../backend/config/Api.php';
 require_once __DIR__ . '/../../backend/models/Categoria.php';
 
-/**
- * Endpoint REST de categorías (/api/categorias y /api/categorias/{id}):
- *   GET    -> público (lo consume el portal de invitados y el panel administrativo)
- *   POST   -> crear categoría (SUPERADMIN_IT y GESTOR_INTEGRAL)
- *   PUT    -> actualizar categoría (SUPERADMIN_IT y GESTOR_INTEGRAL)
- *   DELETE -> eliminar categoría sino tiene documentos/encuestas asociadas (FK ON DELETE RESTRICT)
- */
+// api para listar, crear, editar y eliminar categorias
 $metodo = Api::iniciar(['GET', 'POST', 'PUT', 'DELETE']);
 $id = Api::idDeLaUrl();
 $modelo = new Categoria();
@@ -26,7 +20,7 @@ if ($metodo === 'GET') {
     Api::responder(200, ['status' => 'ok', 'total' => count($lista), 'datos' => $lista]);
 }
 
-// Escritura restringida a gestión y administración TI
+// para modificar categorias se necesita rol de gestion o admin
 Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL']);
 
 if ($metodo === 'POST') {
@@ -67,7 +61,7 @@ if ($metodo === 'PUT') {
     Api::responder(200, ['status' => 'ok', 'mensaje' => 'Categoría actualizada correctamente.']);
 }
 
-// DELETE
+// eliminar categoria
 if (!$modelo->eliminar($id)) {
     if ($modelo->ultimoError === 'referenciado') {
         Api::error(409, 'No se puede eliminar la categoría porque tiene documentos o encuestas asociadas.');
