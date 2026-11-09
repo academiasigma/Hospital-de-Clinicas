@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../../backend/config/Api.php';
 require_once __DIR__ . '/../../backend/config/Database.php';
 
-// GET /api/objetos: catálogo de objetos trasladables (órganos, muestras, insumos) para el formulario.
+// lista los objetos que se pueden trasladar
 Api::iniciar(['GET']);
 Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION']);
 

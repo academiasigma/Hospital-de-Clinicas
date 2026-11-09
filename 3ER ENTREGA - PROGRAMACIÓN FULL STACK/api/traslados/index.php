@@ -4,15 +4,7 @@ require_once __DIR__ . '/../../backend/config/Api.php';
 require_once __DIR__ . '/../../backend/models/Traslado.php';
 require_once __DIR__ . '/../../backend/models/Paciente.php';
 
-/**
- * Endpoint REST de traslados:
- *   GET    /api/traslados[?id_paciente=&documento=&id_vehiculo=&matricula=&estado=&fecha_desde=&fecha_hasta=]
- *   GET    /api/traslados/{id}
- *   POST   /api/traslados                 (alta; la división solo crea la solicitud)
- *   PUT    /api/traslados/{id}            (edición / asignación de recursos, solo si está Pendiente)
- *   PUT    /api/traslados/{id}/estado     (seguimiento: {estado, hora_efectiva_llegada?, hora_retorno?})
- *   DELETE /api/traslados/{id}            (cancelación lógica)
- */
+// api para listar, crear, editar y cambiar el estado de los traslados
 const ROLES_TRANSPORTE = ['SUPERADMIN_IT', 'GESTOR_INTEGRAL'];
 
 $metodo = Api::iniciar(['GET', 'POST', 'PUT', 'DELETE']);
@@ -20,7 +12,7 @@ $id = Api::idDeLaUrl();
 $accion = $_GET['accion'] ?? '';
 $traslado = new Traslado();
 
-// Responde con los errores del modelo y el código HTTP que corresponde.
+// devuelve los errores que encontro el modelo
 $responderErrorModelo = function () use ($traslado) {
     Api::error($traslado->codigoError, $traslado->errores[0] ?? 'Error al procesar el traslado.', $traslado->errores);
 };
@@ -28,7 +20,7 @@ $responderErrorModelo = function () use ($traslado) {
 if ($metodo === 'GET') {
     Api::exigirRol(['SUPERADMIN_IT', 'GESTOR_INTEGRAL', 'DIRECTOR_GENERAL', 'USUARIO_DIVISION']);
     $rol = $_SESSION['usuario']['rol'];
-    // Un usuario de división solo ve las solicitudes que él creó.
+    // si es un usuario de division solo ve los traslados que pidio el
     $soloPropios = ($rol === 'USUARIO_DIVISION') ? (int)$_SESSION['usuario']['id_usuario'] : null;
 
     if ($id !== null) {
@@ -48,7 +40,7 @@ if ($metodo === 'POST') {
     $datos = Api::entrada();
     $esDivision = ($_SESSION['usuario']['rol'] === 'USUARIO_DIVISION');
 
-    // Ingreso manual del paciente: si viene el objeto "paciente" se crea o reutiliza por documento.
+    // si vienen los datos del paciente lo registramos o actualizamos por su cedula
     if (isset($datos['paciente']) && is_array($datos['paciente'])) {
         $modeloPaciente = new Paciente();
         $erroresPaciente = $modeloPaciente->validar($datos['paciente']);
@@ -69,7 +61,7 @@ if ($metodo === 'POST') {
     Api::responder(201, ['status' => 'ok', 'mensaje' => 'Traslado registrado.', 'id' => $nuevoId]);
 }
 
-// PUT y DELETE: solo el área de transporte y el administrador TI.
+// editar y cancelar solo lo pueden hacer transporte y admin
 Api::exigirRol(ROLES_TRANSPORTE);
 if ($id === null) {
     Api::error(400, 'Debe indicar el id del traslado en la URL.');
@@ -95,7 +87,7 @@ if ($metodo === 'PUT') {
     Api::responder(200, ['status' => 'ok', 'mensaje' => 'Traslado actualizado.']);
 }
 
-// DELETE: cancelación lógica, el traslado se conserva en el historial.
+// cancelar el traslado para que quede guardado en el historial
 if (!$traslado->cancelar($id)) {
     $responderErrorModelo();
 }
