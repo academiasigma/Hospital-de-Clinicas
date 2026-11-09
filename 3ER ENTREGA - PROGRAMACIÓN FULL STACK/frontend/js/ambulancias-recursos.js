@@ -1,8 +1,4 @@
-/**
- * Gestión de choferes, enfermeros y vehículos (CRUD completo sobre la API REST).
- * Una única pantalla con pestañas: cada recurso se describe en la configuración CONFIG.
- * Acceso: solo SUPERADMIN_IT y GESTOR_INTEGRAL (el backend también lo exige).
- */
+// abm de choferes, enfermeros y vehiculos
 document.addEventListener('DOMContentLoaded', async () => {
     const API = '../../api';
     const $ = (sel) => document.querySelector(sel);

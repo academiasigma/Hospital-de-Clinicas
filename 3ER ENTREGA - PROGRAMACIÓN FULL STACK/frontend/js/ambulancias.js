@@ -1,9 +1,4 @@
-/**
- * Panel de gestión de traslados (módulo Ambulancias).
- * Consume la API REST (/api/traslados, /api/vehiculos, /api/choferes, /api/enfermeros,
- * /api/pacientes y /api/objetos). Las reglas de negocio las valida el backend (PHP);
- * aquí se hace la validación previa en el navegador para dar respuesta inmediata.
- */
+// logica para el panel de traslados y ambulancias
 document.addEventListener('DOMContentLoaded', async () => {
     const API = '../../api';
     const ROLES_TRANSPORTE = ['SUPERADMIN_IT', 'GESTOR_INTEGRAL'];
@@ -15,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const esDivision = usuario.rol === 'USUARIO_DIVISION';
     const puedeCrear = esTransporte || esDivision;
 
-    // ---------------------------------------------------------------- Selectores
+    // selectores del dom
     const $ = (sel) => document.querySelector(sel);
     const form = $('#formAltaTraslado');
     const tabla = $('#tablaTrasladosCuerpo');
@@ -32,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let catalogos = { vehiculos: [], choferes: [], enfermeros: [], objetos: [] };
     let idEnEdicion = null;
 
-    // ---------------------------------------------------------------- Utilidades
+    // funciones auxiliares
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const hhmm = (h) => (h ? h.substring(0, 5) : '--:--');
@@ -60,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return lista.join(' ');
     };
 
-    // ---------------------------------------------------------------- Permisos de interfaz
+    // mostramos u ocultamos partes segun el rol del usuario
     if (!puedeCrear) $('#seccionFormulario').classList.add('oculta');
     if (esDivision) $('#grupoRecursos').classList.add('oculta');
     if (esTransporte) {
@@ -72,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#btnGuardar').textContent = 'Enviar Solicitud';
     }
 
-    // ---------------------------------------------------------------- Catálogos
+    // carga de los selects con los datos de la base
     function llenarSelect(select, filas, textoVacio, etiqueta) {
         select.innerHTML = `<option value="">${esc(textoVacio)}</option>` +
             filas.map((f) => `<option value="${esc(f.id)}">${esc(etiqueta(f))}</option>`).join('');
@@ -100,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             (x) => x.nombre);
     }
 
-    // ---------------------------------------------------------------- Tipo de carga (paciente / objeto)
+    // cambio entre traslado de paciente o de objeto
     function esOrgano() {
         const obj = catalogos.objetos.find((o) => String(o.id_objeto) === $('#objeto').value);
         return !!obj && obj.tipo_objeto === 'organo';
@@ -110,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const esPaciente = $('#tipo_traslado').value === 'paciente';
         $('#grupo_paciente').classList.toggle('oculta', !esPaciente);
         $('#grupo_objeto').classList.toggle('oculta', esPaciente);
-        $('#grupo_enfermero').classList.toggle('oculta', !esPaciente); // RNE03: un objeto no lleva enfermero
+        $('#grupo_enfermero').classList.toggle('oculta', !esPaciente);
         if (!esPaciente) $('#enfermero').value = '';
         actualizarOrgano();
     }
@@ -118,14 +113,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     function actualizarOrgano() {
         const organo = $('#tipo_traslado').value === 'objeto' && esOrgano();
         $('#lblLimite').textContent = organo ? 'Hora límite * (órgano)' : 'Límite de horario';
-        if (organo) $('#prioridad').value = 'Alta'; // RNE05
+        if (organo) $('#prioridad').value = 'Alta';
         $('#prioridad').disabled = organo;
     }
 
     $('#tipo_traslado').addEventListener('change', actualizarTipo);
     $('#objeto').addEventListener('change', actualizarOrgano);
 
-    // Autocompleta los datos si la C.I. ya está registrada
+    // si escribe una cedula que ya existe cargamos los datos del paciente
     $('#pac_documento').addEventListener('blur', async () => {
         const doc = $('#pac_documento').value.trim();
         if (!/^[0-9]{6,12}$/.test(doc)) return;
@@ -150,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#pac_aislamiento').checked = !!Number(p.requiere_aislamiento);
     }
 
-    // ---------------------------------------------------------------- Validación en el navegador
+    // validacion de los campos del formulario
     function validarFormulario() {
         const errores = [];
         const v = (id) => $('#' + id).value.trim();
@@ -184,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return errores;
     }
 
-    // ---------------------------------------------------------------- Guardar (alta / edición)
+    // guardar o actualizar un traslado
     async function guardarPaciente() {
         const r = await llamar(`${API}/pacientes/index.php`, 'POST', {
             documento: $('#pac_documento').value.trim(),
@@ -211,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const payload = {};
         campos.forEach((id) => { payload[id] = $('#' + id).value.trim(); });
-        payload.prioridad = $('#prioridad').value; // el select puede estar deshabilitado (órgano)
+        payload.prioridad = $('#prioridad').value;
         if (esTransporte) {
             payload.id_vehiculo = $('#vehiculo').value || null;
             payload.id_chofer = $('#chofer').value || null;
@@ -245,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cargarTraslados();
     });
 
-    // ---------------------------------------------------------------- Edición
+    // funciones para editar un traslado pendiente
     async function entrarEnEdicion(id) {
         const t = traslados.find((x) => Number(x.id_traslado) === id);
         if (!t) return;
@@ -287,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     $('#btnCancelarEdicion').addEventListener('click', salirDeEdicion);
 
-    // ---------------------------------------------------------------- Listado
+    // carga y muestra de la tabla de traslados
     function filtrosActuales() {
         const p = new URLSearchParams();
         if ($('#filtroDocumento').value.trim()) p.set('documento', $('#filtroDocumento').value.trim());
@@ -364,7 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join('');
     }
 
-    // Acciones sobre una fila: editar o cambiar de estado / cancelar
+    // botones de accion en cada fila de la tabla
     tabla.addEventListener('click', async (e) => {
         const btn = e.target.closest('button[data-accion]');
         if (!btn) return;
@@ -392,9 +387,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         cargarTraslados();
     });
 
-    // ---------------------------------------------------------------- Inicio
+    // carga inicial al entrar a la pagina
     await cargarCatalogos();
     salirDeEdicion();
     await cargarTraslados();
-    setInterval(() => { if (idEnEdicion === null) cargarTraslados(); }, 30000); // seguimiento casi en tiempo real
+    setInterval(() => { if (idEnEdicion === null) cargarTraslados(); }, 30000);
 });

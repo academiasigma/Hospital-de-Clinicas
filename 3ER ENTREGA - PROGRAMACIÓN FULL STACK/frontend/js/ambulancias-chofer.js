@@ -1,8 +1,4 @@
-/**
- * Terminal móvil del chofer. Muestra el viaje activo (En Curso / Retornando) o el próximo
- * Pendiente del chofer elegido y permite registrar el avance: salida, llegada a destino y retorno.
- * Usa la API REST; cada acción llama a PUT /api/traslados/{id}/estado.
- */
+// logica para la terminal movil del chofer
 document.addEventListener('DOMContentLoaded', async () => {
     const API = '../../api';
     const $ = (sel) => document.querySelector(sel);
@@ -42,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (selectChofer.value) {
             const r = await llamar(`${API}/traslados/index.php?id_chofer=${encodeURIComponent(selectChofer.value)}`);
             const lista = r.ok ? r.data.datos : [];
-            // Prioriza el viaje ya iniciado; si no hay, el próximo pendiente (el listado viene del más reciente al más antiguo).
+            // muestra primero si tiene un viaje en curso y sino el proximo pendiente
             viajeActivo = lista.find((t) => t.estado === 'En Curso' || t.estado === 'Retornando')
                 || lista.filter((t) => t.estado === 'Pendiente').pop()
                 || null;
