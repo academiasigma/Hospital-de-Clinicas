@@ -2,16 +2,11 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-/**
- * Encuesta de satisfacción anónima vinculada a una categoría clínica.
- * Implementa las restricciones RNE08, RNE09 y RNE10 en guardarResolucion()
- * y expone el resumen estadístico básico para el panel administrativo.
- */
+// modelo para gestionar las encuestas de satisfaccion y sus respuestas
 class Encuesta {
     private ?PDO $conexion;
     private string $tabla = 'encuesta';
 
-    /** Mensaje de error de validación (RNE08 / RNE09 / RNE10) de la última resolución. */
     public string $ultimoError = '';
     public int $codigoError = 400;
 
@@ -20,7 +15,7 @@ class Encuesta {
         $this->conexion = $db->conectar();
     }
 
-    // Obtiene la encuesta activa de una categoría específica, con sus preguntas y opciones.
+    // trae la encuesta activa de una categoria con sus preguntas y opciones
     public function obtenerActivaPorCategoria(int $id_categoria): ?array {
         $sql = "SELECT id_encuesta, comentarios, id_categoria 
                 FROM {$this->tabla} 
@@ -40,7 +35,7 @@ class Encuesta {
         return $this->cargarPreguntasDeEncuesta($encuesta);
     }
 
-    // Obtiene una encuesta activa específica por su ID, con sus preguntas y opciones.
+    // trae una encuesta activa buscando por su id
     public function obtenerActivaPorId(int $id_encuesta): ?array {
         $sql = "SELECT e.id_encuesta, e.comentarios, e.id_categoria, c.nombre AS categoria_nombre
                 FROM {$this->tabla} e
@@ -59,7 +54,7 @@ class Encuesta {
         return $this->cargarPreguntasDeEncuesta($encuesta);
     }
 
-    // Lista todas las encuestas activas (con cantidad de preguntas) para el Portal de Invitados.
+    // lista las encuestas activas para mostrarlas en el portal de pacientes
     public function listarActivasPublicas(): array {
         $sql = "SELECT e.id_encuesta, e.comentarios, e.id_categoria, c.nombre AS categoria_nombre,
                        (SELECT COUNT(*) FROM pregunta p WHERE p.id_encuesta = e.id_encuesta) AS total_preguntas
@@ -75,7 +70,7 @@ class Encuesta {
     private function cargarPreguntasDeEncuesta(array $encuesta): array {
         $id_encuesta = (int)$encuesta['id_encuesta'];
 
-        // Obtener preguntas de la encuesta
+        // buscamos las preguntas de la encuesta
         $sqlPreguntas = "SELECT id_pregunta, enunciado, tipo 
                          FROM pregunta 
                          WHERE id_encuesta = :id_encuesta
@@ -85,7 +80,7 @@ class Encuesta {
         $stmtPreguntas->execute();
         $preguntas = $stmtPreguntas->fetchAll();
 
-        // Para cada pregunta de tipo Opcion_Multiple, obtener sus opciones
+        // si la pregunta es de opcion multiple traemos las opciones
         foreach ($preguntas as &$pregunta) {
             $pregunta['id_pregunta'] = (int)$pregunta['id_pregunta'];
             if ($pregunta['tipo'] === 'Opcion_Multiple') {
@@ -108,18 +103,12 @@ class Encuesta {
         return $encuesta;
     }
 
-    /**
-     * Guarda de forma anónima y transaccional una resolución de encuesta con sus respuestas.
-     * Valida:
-     *   - RNE08: la encuesta debe existir y tener estado = 'Activa'.
-     *   - RNE09: cada id_pregunta debe pertenecer a esa misma id_encuesta.
-     *   - RNE10: dominio de respuesta según pregunta.tipo (Si/No -> SI/NO, Escala_1_5 -> 1..5).
-     */
+    // guarda las respuestas que envia un paciente sobre una encuesta activa
     public function guardarResolucion(int $id_encuesta, string $observaciones, array $respuestas): bool {
         $this->ultimoError = '';
         $this->codigoError = 400;
 
-        // RNE08: verificar que la encuesta exista y esté Activa
+        // verificamos que la encuesta exista y este activa
         $stmtEnc = $this->conexion->prepare(
             "SELECT id_encuesta, estado FROM encuesta WHERE id_encuesta = :id LIMIT 1"
         );
@@ -138,7 +127,7 @@ class Encuesta {
             return false;
         }
 
-        // Cargar preguntas válidas de esta encuesta para verificar RNE09 y RNE10
+        // traemos las preguntas de la encuesta para validar las respuestas
         $stmtPregs = $this->conexion->prepare(
             "SELECT id_pregunta, tipo FROM pregunta WHERE id_encuesta = :id"
         );
@@ -154,7 +143,7 @@ class Encuesta {
             $id_pregunta = (int)($resp['id_pregunta'] ?? 0);
             $contenido = trim((string)($resp['contenido_respuesta'] ?? ''));
 
-            // RNE09: la pregunta debe pertenecer a la encuesta
+            // revisamos que la pregunta sea de esta encuesta
             if (!isset($mapaPreguntas[$id_pregunta])) {
                 $this->ultimoError = "La pregunta #$id_pregunta no pertenece a la encuesta seleccionada.";
                 return false;
@@ -170,7 +159,7 @@ class Encuesta {
                 return false;
             }
 
-            // RNE10: validación de dominio según el tipo de pregunta
+            // validamos el valor segun el tipo de pregunta
             if ($tipo === 'Si/No') {
                 $upper = strtr(mb_strtoupper($contenido, 'UTF-8'), ['Í' => 'I']);
                 if ($upper !== 'SI' && $upper !== 'NO') {
@@ -242,11 +231,7 @@ class Encuesta {
         }
     }
 
-    /**
-     * Obtiene el resumen de resultados de las encuestas de satisfacción (opcionalmente filtrado por categoría):
-     * cantidad de resoluciones, desglose por pregunta (conteo Sí/No, promedio y distribución 1-5, textos libres)
-     * y observaciones generales registradas.
-     */
+    // arma el resumen con los resultados y promedios de cada encuesta
     public function obtenerResultados(?int $id_categoria = null): array {
         $sql = "SELECT e.id_encuesta, e.comentarios, e.estado, e.id_categoria, c.nombre AS categoria_nombre
                 FROM encuesta e
@@ -385,7 +370,7 @@ class Encuesta {
         return $resultado;
     }
 
-    // ---------------------------------------------------------------- Gestión de Encuestas y Preguntas (CRUD)
+    // abm de encuestas y preguntas
 
     public function obtenerEncuestaPorId(int $id): ?array {
         $stmt = $this->conexion->prepare("SELECT * FROM encuesta WHERE id_encuesta = :id LIMIT 1");
@@ -395,7 +380,7 @@ class Encuesta {
         return $fila ?: null;
     }
 
-    // Crea una encuesta para una categoría (si pasa a Activa, cierra las anteriores de esa misma categoría).
+    // crea una encuesta para una categoria y si queda activa cierra las anteriores
     public function crearEncuesta(int $id_categoria, string $comentarios, string $estado = 'Activa'): ?int {
         $this->ultimoError = '';
         $this->codigoError = 400;
@@ -412,7 +397,7 @@ class Encuesta {
         try {
             $this->conexion->beginTransaction();
 
-            // Si la nueva encuesta queda Activa, se cierran otras encuestas activas de esa misma categoría
+            // si la nueva queda activa cerramos las otras de esa categoria
             if ($estado === 'Activa') {
                 $stmtCerrar = $this->conexion->prepare(
                     "UPDATE encuesta SET estado = 'Cerrada' WHERE id_categoria = :id_categoria AND estado = 'Activa'"
@@ -442,7 +427,7 @@ class Encuesta {
         }
     }
 
-    // Actualiza el comentario/título y el estado ('Borrador', 'Activa', 'Cerrada') de una encuesta.
+    // actualiza el titulo y el estado de una encuesta
     public function actualizarEncuesta(int $id_encuesta, string $comentarios, string $estado): bool {
         $this->ultimoError = '';
         $this->codigoError = 400;
@@ -461,7 +446,7 @@ class Encuesta {
         try {
             $this->conexion->beginTransaction();
 
-            // Si pasa a Activa, cerramos cualquier otra encuesta activa de esa misma categoría
+            // si pasa a activa cerramos las otras de esa misma categoria
             if ($estado === 'Activa') {
                 $stmtCerrar = $this->conexion->prepare(
                     "UPDATE encuesta SET estado = 'Cerrada'
@@ -492,7 +477,7 @@ class Encuesta {
         }
     }
 
-    // Elimina una encuesta completa (preguntas, opciones y resoluciones se eliminan en cascada según FK).
+    // elimina una encuesta completa
     public function eliminarEncuesta(int $id_encuesta): bool {
         $this->ultimoError = '';
         if ($this->obtenerEncuestaPorId($id_encuesta) === null) {
@@ -513,7 +498,7 @@ class Encuesta {
         return $fila ?: null;
     }
 
-    // Crea una pregunta dentro de una encuesta (y sus opciones si es Opcion_Multiple).
+    // agrega una pregunta a la encuesta y guarda sus opciones si es multiple
     public function crearPregunta(int $id_encuesta, string $enunciado, string $tipo, array $opciones = []): ?int {
         $this->ultimoError = '';
         $this->codigoError = 400;
@@ -569,7 +554,7 @@ class Encuesta {
         }
     }
 
-    // Actualiza el enunciado y el tipo de una pregunta existente.
+    // modifica una pregunta existente y sus opciones
     public function actualizarPregunta(int $id_pregunta, string $enunciado, string $tipo, array $opciones = []): bool {
         $this->ultimoError = '';
         $this->codigoError = 400;
@@ -628,7 +613,7 @@ class Encuesta {
         }
     }
 
-    // Elimina una pregunta (sus respuestas y opciones se eliminan en cascada según FK ON DELETE CASCADE).
+    // elimina una pregunta de la encuesta
     public function eliminarPregunta(int $id_pregunta): bool {
         $this->ultimoError = '';
         if ($this->obtenerPreguntaPorId($id_pregunta) === null) {

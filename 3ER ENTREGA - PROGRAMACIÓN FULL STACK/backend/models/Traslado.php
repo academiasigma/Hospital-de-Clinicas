@@ -2,21 +2,11 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-/**
- * Traslado de pacientes u objetos (módulo Ambulancias).
- * Concentra las restricciones no estructurales (RNE01 a RNE07) en la capa de negocio y
- * accede a los datos solo con consultas preparadas PDO.
- *
- * Flujo de estados: Pendiente -> En Curso -> Retornando -> Finalizado (o Cancelado en cualquier punto activo).
- * Una división del hospital crea la solicitud (Pendiente, sin recursos); el área de transporte
- * asigna vehículo, chofer y enfermero editándola, y luego hace el seguimiento del estado.
- */
+// modelo para gestionar los traslados de pacientes y objetos
 class Traslado {
     private ?PDO $conexion;
 
-    /** Errores de validación o de regla de negocio de la última operación. */
     public array $errores = [];
-    /** Código HTTP sugerido para el error: 400 (datos), 404 (no existe) o 409 (conflicto). */
     public int $codigoError = 400;
 
     private const ESTADOS_ACTIVOS = ['Pendiente', 'En Curso', 'Retornando'];
@@ -41,7 +31,7 @@ class Traslado {
         'motivo_procedimiento', 'responsable_recepcion'
     ];
     private const HORAS = ['hora_salida', 'hora_estimada_llegada', 'hora_efectiva_llegada', 'hora_retorno', 'limite_horario'];
-    // RNE07: departamentos del interior del país (destinos prohibidos). Montevideo y Canelones son zona metropolitana.
+    // departamentos del interior para bloquear traslados fuera del area metropolitana
     private const INTERIOR = [
         'artigas', 'cerro largo', 'colonia', 'durazno', 'flores', 'florida', 'lavalleja', 'maldonado',
         'paysandu', 'rio negro', 'rivera', 'rocha', 'salto', 'soriano', 'tacuarembo', 'treinta y tres'
@@ -64,12 +54,7 @@ class Traslado {
         $this->conexion = $db->conectar();
     }
 
-    // ---------------------------------------------------------------- Consultas
-
-    /**
-     * Historial de traslados. Filtros: id_paciente, documento, id_vehiculo, id_chofer, matricula,
-     * estado, fecha_desde, fecha_hasta. $idUsuario limita a los traslados creados por ese usuario.
-     */
+    // devuelve el listado de traslados aplicando los filtros de busqueda
     public function listar(array $filtros = [], ?int $idUsuario = null): array {
         $sql = self::SELECT_BASE . " WHERE 1 = 1";
         $p = [];
@@ -125,12 +110,7 @@ class Traslado {
         return $fila ?: null;
     }
 
-    // ---------------------------------------------------------------- Escritura
-
-    /**
-     * Registra un traslado. Si $soloSolicitud es true (usuario de una división) se ignoran
-     * vehículo, chofer y enfermero: los asigna después el área de transporte.
-     */
+    // crea un traslado nuevo y si lo pide una division deja sin asignar los recursos
     public function crear(array $datos, int $idUsuario, bool $soloSolicitud = false): ?int {
         $datos = $this->normalizar($datos);
         if ($soloSolicitud) {
@@ -161,11 +141,7 @@ class Traslado {
         }
     }
 
-    /**
-     * Edición completa (incluye asignar vehículo, chofer y enfermero). Solo se permite mientras
-     * el traslado está Pendiente; una vez iniciado se gestiona con cambiarEstado().
-     * Los horarios reales (llegada efectiva y retorno) no se editan por aquí.
-     */
+    // edita los datos de un traslado que todavia esta pendiente
     public function actualizar(int $id, array $datos): bool {
         $actual = $this->obtenerPorId($id);
         if ($actual === null) {
@@ -202,11 +178,7 @@ class Traslado {
         }
     }
 
-    /**
-     * Seguimiento del estado. Valida la transición y registra los horarios reales:
-     * al pasar a Retornando se guarda la llegada efectiva y al Finalizar la hora de retorno
-     * (si no se informan, se usa la hora actual). Sincroniza el estado del vehículo.
-     */
+    // cambia el estado del traslado y guarda las horas reales de llegada y retorno
     public function cambiarEstado(int $id, string $nuevoEstado, ?string $horaEfectiva = null, ?string $horaRetorno = null): bool {
         $t = $this->obtenerPorId($id);
         if ($t === null) {
@@ -256,17 +228,12 @@ class Traslado {
         }
     }
 
-    // Cancelación lógica (DELETE): el traslado queda en el historial con estado Cancelado.
+    // pasa el traslado a estado cancelado sin borrarlo de la tabla
     public function cancelar(int $id): bool {
         return $this->cambiarEstado($id, 'Cancelado');
     }
 
-    // ---------------------------------------------------------------- Reglas de negocio
-
-    /**
-     * Aplica las restricciones no estructurales. Devuelve true si el traslado es válido;
-     * si no, deja los mensajes en $errores y el código HTTP en $codigoError.
-     */
+    // valida todos los campos y las reglas de negocio del traslado
     private function validar(array &$d, ?int $idActual): bool {
         $this->errores = [];
         $conflicto = false;
@@ -292,12 +259,12 @@ class Traslado {
             return false;
         }
 
-        // RNE01: coherencia cronológica
+        // la llegada estimada tiene que ser despues de la salida
         if ($d['hora_estimada_llegada'] <= $d['hora_salida']) {
             $this->errores[] = 'La hora estimada de llegada debe ser posterior a la hora de salida.';
         }
 
-        // RNE07: destino restringido a la zona metropolitana
+        // revisa que el destino no sea en el interior del pais
         $destino = $this->sinAcentos($d['direccion_destino'] . ' ' . $d['sector_destino']);
         foreach (self::INTERIOR as $depto) {
             if (preg_match('/\b' . preg_quote($depto, '/') . '\b/', $destino)) {
@@ -306,7 +273,7 @@ class Traslado {
             }
         }
 
-        // RNE03: paciente u objeto, nunca ambos ni ninguno
+        // tiene que tener un paciente o un objeto pero no los dos
         $paciente = $objeto = null;
         if (($d['id_paciente'] === null) === ($d['id_objeto'] === null)) {
             $this->errores[] = 'El traslado debe asociarse a un paciente o a un objeto, nunca a ambos.';
@@ -322,26 +289,26 @@ class Traslado {
             }
         }
 
-        // Tipo de vehículo exigido según la carga (RNE05, RNE06 y requisitos clínicos)
+        // revisamos si por las condiciones del paciente o del objeto necesita ambulancia si o si
         $exigeAmbulancia = false;
         if ($paciente !== null) {
             $exigeAmbulancia = !$paciente['se_maneja_por_sus_medios'] || $paciente['requiere_oxigeno']
                 || $paciente['requiere_camilla'] || $paciente['requiere_aislamiento'];
         }
         if ($objeto !== null) {
-            $d['id_enfermero'] = null; // RNE03/RNE05: un objeto no lleva enfermero acompañante
+            $d['id_enfermero'] = null;
             if (in_array($objeto['tipo_objeto'], ['organo', 'muestra_biologica'], true)) {
                 $exigeAmbulancia = true;
             }
             if ($objeto['tipo_objeto'] === 'organo') {
-                $d['prioridad'] = 'Alta'; // RNE05: prioridad máxima
+                $d['prioridad'] = 'Alta';
                 if ($d['limite_horario'] === null) {
                     $this->errores[] = 'El traslado de un órgano exige registrar la hora límite.';
                 }
             }
         }
 
-        // Vehículo (RNE04, RNE06)
+        // validaciones del vehiculo asignado
         if ($d['id_vehiculo'] !== null) {
             $vehiculo = $this->buscar('vehiculo', 'id_vehiculo', $d['id_vehiculo']);
             if ($vehiculo === null) {
@@ -358,19 +325,18 @@ class Traslado {
             }
         }
 
-        // Chofer y enfermero
+        // validamos chofer y enfermero
         if ($d['id_chofer'] !== null && $this->buscar('chofer', 'id_chofer', $d['id_chofer']) === null) {
             $this->errores[] = 'El chofer indicado no existe.';
         }
         if ($d['id_enfermero'] !== null && $this->buscar('enfermero', 'id_enfermero', $d['id_enfermero']) === null) {
             $this->errores[] = 'El enfermero indicado no existe.';
         }
-        // RNE03: enfermero obligatorio para pacientes con prioridad Alta (se exige al asignar recursos)
         if ($paciente !== null && $d['prioridad'] === 'Alta' && $d['id_vehiculo'] !== null && $d['id_enfermero'] === null) {
             $this->errores[] = 'Un traslado de paciente con prioridad Alta requiere enfermero acompañante.';
         }
 
-        // RNE02: exclusividad temporal de vehículo, chofer y enfermero
+        // verificamos que el vehiculo, chofer o enfermero no esten ocupados en ese mismo horario
         if (empty($this->errores) || $conflicto) {
             $recursos = ['id_vehiculo' => 'vehículo', 'id_chofer' => 'chofer', 'id_enfermero' => 'enfermero'];
             foreach ($recursos as $columna => $nombre) {
@@ -388,10 +354,10 @@ class Traslado {
         return true;
     }
 
-    // RNE02: ¿hay otro traslado activo del mismo recurso cuyo intervalo [salida, retorno/llegada estimada] se superpone?
+    // consulta si hay otro traslado activo que se superponga en fecha y hora
     private function haySolapamiento(string $columna, int $valor, array $d, ?int $idActual): bool {
         if (!in_array($columna, ['id_vehiculo', 'id_chofer', 'id_enfermero'], true)) {
-            return false; // lista blanca: el nombre de columna nunca viene del usuario
+            return false;
         }
         $sql = "SELECT COUNT(*) FROM traslado
                 WHERE $columna = :valor AND fecha = :fecha
@@ -410,7 +376,7 @@ class Traslado {
         return (int)$stmt->fetchColumn() > 0;
     }
 
-    // Bloquea las filas de vehículo y chofer para que dos solicitudes simultáneas no se asignen el mismo recurso.
+    // bloquea las filas mientras se guarda para evitar que se asigne dos veces al mismo tiempo
     private function bloquearRecursos(array $d): void {
         foreach (['vehiculo' => 'id_vehiculo', 'chofer' => 'id_chofer', 'enfermero' => 'id_enfermero'] as $tabla => $columna) {
             if ($d[$columna] !== null) {
@@ -420,10 +386,7 @@ class Traslado {
         }
     }
 
-    /**
-     * El vehículo pasa a 'En Traslado' al iniciar y vuelve a 'Disponible' al finalizar o cancelar,
-     * salvo que esté en Mantenimiento/Fuera de Servicio o tenga otro traslado en curso.
-     */
+    // actualiza el estado del vehiculo cuando empieza o termina un traslado
     private function sincronizarVehiculo(?int $idVehiculo, string $nuevoEstado): void {
         if ($idVehiculo === null) {
             return;
@@ -445,9 +408,7 @@ class Traslado {
         $stmt->execute($parametros);
     }
 
-    // ---------------------------------------------------------------- Auxiliares
-
-    // Lista blanca de campos; '' -> null; ids a int; horas HH:MM -> HH:MM:SS.
+    // limpia los datos de entrada y formatea las horas
     private function normalizar(array $datos): array {
         $limpio = [];
         foreach (self::CAMPOS as $campo) {
@@ -491,7 +452,7 @@ class Traslado {
         return strtr(mb_strtolower($texto, 'UTF-8'), ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n']);
     }
 
-    // Búsqueda por clave primaria en tablas de referencia (los nombres de tabla/columna son constantes del código).
+    // busca un registro por id en una tabla
     private function buscar(string $tabla, string $clave, int $id): ?array {
         $stmt = $this->conexion->prepare("SELECT * FROM $tabla WHERE $clave = :id LIMIT 1");
         $stmt->execute(['id' => $id]);
