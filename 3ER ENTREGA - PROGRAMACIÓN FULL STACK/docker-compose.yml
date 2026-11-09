@@ -4,10 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: sigsm_web
+    restart: always
     ports:
       - "8080:80"
     environment:
-      DB_HOST: "192.168.1.234"
+      DB_HOST: "sigsm_mariadb"
       DB_PORT: "3306"
       DB_NAME: "sigsm_hospital"
       DB_USER: "sigsm_app"
@@ -21,20 +22,21 @@ services:
       - sigsm_net
 
   sigsm_mariadb:
-    image: mariadb:11
+    image: mariadb:10.5
     container_name: sigsm_mariadb
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: sigsm_hospital
       MYSQL_USER: sigsm_app
       MYSQL_PASSWORD: Hc1234_db
     ports:
-      - "33060:3306"
+      - "3306:3306"
     volumes:
       - db-volume:/var/lib/mysql
       - ./sigsm_db.sql:/docker-entrypoint-initdb.d/01-sigsm.sql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -43,6 +45,7 @@ services:
 
 networks:
   sigsm_net:
+    driver: bridge
 
 volumes:
   db-volume:

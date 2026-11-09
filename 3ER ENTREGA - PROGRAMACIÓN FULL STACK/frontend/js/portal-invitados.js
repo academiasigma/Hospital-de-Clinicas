@@ -32,8 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         try {
-            // El endpoint api/documentos/publicos retorna todos los documentos de acceso libre
-            const res = await fetch('../../api/documentos/publicos', { method: 'GET' });
+            // El endpoint api/documentos/publicos.php retorna todos los documentos de acceso libre
+            const res = await fetch('../../api/documentos/publicos.php', { method: 'GET' });
             const data = await res.json();
 
             if (!res.ok) {
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     //Cargar las categorías para las pestañas de filtro
     const cargarFiltrosCategorias = async () => {
         try {
-            const res = await fetch('../../api/categorias', { method: 'GET' });
+            const res = await fetch('../../api/categorias/index.php', { method: 'GET' });
             const data = await res.json();
 
             if (res.ok && data.status === 'ok') {
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cargarEncuestasActivas = async () => {
         if (!activeSurveysGrid) return;
         try {
-            const res = await fetch('../../api/encuestas?activas=1', { method: 'GET' });
+            const res = await fetch('../../api/encuestas/index.php?activas=1', { method: 'GET' });
             const data = await res.json();
             if (res.ok && data.status === 'ok') {
                 encuestasActivasList = data.encuestas || [];
@@ -205,8 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const url = idEncuestaEspecifica > 0
-                ? `../../api/encuestas?id_encuesta=${idEncuestaEspecifica}`
-                : `../../api/encuestas?id_categoria=${idCategoria}`;
+                ? `../../api/encuestas/index.php?id_encuesta=${idEncuestaEspecifica}`
+                : `../../api/encuestas/index.php?id_categoria=${idCategoria}`;
             const res = await fetch(url);
             const data = await res.json();
 
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnEnviarEncuesta.textContent = 'Enviando...';
 
         try {
-            const resSubmit = await fetch('../../api/encuestas', {
+            const resSubmit = await fetch('../../api/encuestas/index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

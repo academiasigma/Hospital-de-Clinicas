@@ -80,8 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarCatalogos() {
         const [v, c, e, o] = await Promise.all([
-            llamar(`${API}/vehiculos`), llamar(`${API}/choferes`),
-            llamar(`${API}/enfermeros`), llamar(`${API}/objetos`)
+            llamar(`${API}/vehiculos/index.php`), llamar(`${API}/choferes/index.php`),
+            llamar(`${API}/enfermeros/index.php`), llamar(`${API}/objetos/index.php`)
         ]);
         catalogos.vehiculos = v.data.datos || [];
         catalogos.choferes = c.data.datos || [];
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('#pac_documento').addEventListener('blur', async () => {
         const doc = $('#pac_documento').value.trim();
         if (!/^[0-9]{6,12}$/.test(doc)) return;
-        const r = await llamar(`${API}/pacientes?documento=${encodeURIComponent(doc)}`);
+        const r = await llamar(`${API}/pacientes/index.php?documento=${encodeURIComponent(doc)}`);
         const p = r.ok && r.data.datos && r.data.datos[0];
         if (p) {
             cargarPaciente(p);
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ---------------------------------------------------------------- Guardar (alta / edición)
     async function guardarPaciente() {
-        const r = await llamar(`${API}/pacientes`, 'POST', {
+        const r = await llamar(`${API}/pacientes/index.php`, 'POST', {
             documento: $('#pac_documento').value.trim(),
             nombre: $('#pac_nombre').value.trim(),
             telefono: $('#pac_telefono').value.trim(),
@@ -232,8 +232,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const r = idEnEdicion === null
-            ? await llamar(`${API}/traslados`, 'POST', payload)
-            : await llamar(`${API}/traslados/${idEnEdicion}`, 'PUT', payload);
+            ? await llamar(`${API}/traslados/index.php`, 'POST', payload)
+            : await llamar(`${API}/traslados/index.php?id=${idEnEdicion}`, 'PUT', payload);
         $('#btnGuardar').disabled = false;
 
         if (!r.ok) {
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#tipo_traslado').value = t.id_paciente ? 'paciente' : 'objeto';
         actualizarTipo();
         if (t.id_paciente) {
-            const r = await llamar(`${API}/pacientes/${t.id_paciente}`);
+            const r = await llamar(`${API}/pacientes/index.php?id=${t.id_paciente}`);
             if (r.ok) cargarPaciente(r.data.datos);
         } else {
             $('#objeto').value = String(t.id_objeto);
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarTraslados() {
         const qs = filtrosActuales();
-        const r = await llamar(`${API}/traslados${qs ? '?' + qs : ''}`);
+        const r = await llamar(`${API}/traslados/index.php${qs ? '?' + qs : ''}`);
         traslados = r.ok ? (r.data.datos || []) : [];
         actualizarEstadisticas();
         renderizarTabla();
@@ -377,10 +377,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (accion === 'Cancelado') {
             if (!confirm(`¿Confirma la cancelación del traslado #${id}?`)) return;
-            const r = await llamar(`${API}/traslados/${id}`, 'DELETE');
+            const r = await llamar(`${API}/traslados/index.php?id=${id}`, 'DELETE');
             if (!r.ok) alert(mensajeDeError(r));
         } else {
-            const r = await llamar(`${API}/traslados/${id}/estado`, 'PUT', { estado: accion });
+            const r = await llamar(`${API}/traslados/index.php?id=${id}&accion=estado`, 'PUT', { estado: accion });
             if (!r.ok) alert(mensajeDeError(r));
         }
         await cargarTraslados();

@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function cargarChoferes() {
-        const r = await llamar(`${API}/choferes`);
+        const r = await llamar(`${API}/choferes/index.php`);
         const choferes = r.ok ? r.data.datos : [];
         selectChofer.innerHTML = choferes.map((c) => `<option value="${esc(c.id_chofer)}">${esc(c.nombre)}</option>`).join('');
     }
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#msgChofer').textContent = '';
         viajeActivo = null;
         if (selectChofer.value) {
-            const r = await llamar(`${API}/traslados?id_chofer=${encodeURIComponent(selectChofer.value)}`);
+            const r = await llamar(`${API}/traslados/index.php?id_chofer=${encodeURIComponent(selectChofer.value)}`);
             const lista = r.ok ? r.data.datos : [];
             // Prioriza el viaje ya iniciado; si no hay, el próximo pendiente (el listado viene del más reciente al más antiguo).
             viajeActivo = lista.find((t) => t.estado === 'En Curso' || t.estado === 'Retornando')
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cambiarEstado(nuevoEstado) {
         if (!viajeActivo) return;
-        const r = await llamar(`${API}/traslados/${viajeActivo.id_traslado}/estado`, 'PUT', { estado: nuevoEstado });
+        const r = await llamar(`${API}/traslados/index.php?id=${viajeActivo.id_traslado}&accion=estado`, 'PUT', { estado: nuevoEstado });
         if (!r.ok) {
             $('#msgChofer').textContent = (r.data.errores && r.data.errores.join(' ')) || r.data.mensaje || 'No se pudo actualizar el estado.';
             return;

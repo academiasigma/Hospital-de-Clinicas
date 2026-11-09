@@ -15,5 +15,8 @@ RUN mkdir -p /var/www/html/uploads/pdf /var/www/html/uploads/documentos \
     && chown -R www-data:www-data /var/www/html/uploads \
     && chmod -R 755 /var/www/html/uploads
 
-# Asignar propietario al proyecto
-RUN chown -R www-data:www-data /var/www/html
+# Asignar propietario al proyecto y garantizar .htaccess para ruteo REST
+RUN if [ ! -f /var/www/html/.htaccess ]; then \
+        printf "RewriteEngine On\nRewriteCond %%{REQUEST_FILENAME} !-f\nRewriteCond %%{REQUEST_FILENAME} !-d\nRewriteRule ^api/documentos/publicos/?$ api/documentos/publicos.php [L,QSA]\nRewriteRule ^api/encuestas/resultados/?$ api/encuestas/index.php?resultados=1 [L,QSA]\nRewriteRule ^api/traslados/([0-9]+)/estado/?$ api/traslados/index.php?id=\$1&accion=estado [L,QSA]\nRewriteRule ^api/(vehiculos|choferes|enfermeros|pacientes|objetos|traslados|documentos|categorias|encuestas|usuarios)/([0-9]+)/?$ api/\$1/index.php?id=\$2 [L,QSA]\nRewriteRule ^api/(vehiculos|choferes|enfermeros|pacientes|objetos|traslados|documentos|categorias|encuestas|usuarios)/?$ api/\$1/index.php [L,QSA]\n" > /var/www/html/.htaccess; \
+    fi \
+    && chown -R www-data:www-data /var/www/html

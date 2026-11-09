@@ -1,4 +1,5 @@
 
+SET NAMES utf8mb4;
 DROP DATABASE IF EXISTS sigsm_hospital;
 CREATE DATABASE sigsm_hospital CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE sigsm_hospital;

@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function cargar() {
-        const r = await llamar(`${API}/${recurso}`);
+        const r = await llamar(`${API}/${recurso}/index.php`);
         filas = r.ok ? r.data.datos : [];
         dibujarTabla();
     }
@@ -128,8 +128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const r = idEnEdicion === null
-            ? await llamar(`${API}/${recurso}`, 'POST', datos)
-            : await llamar(`${API}/${recurso}/${idEnEdicion}`, 'PUT', datos);
+            ? await llamar(`${API}/${recurso}/index.php`, 'POST', datos)
+            : await llamar(`${API}/${recurso}/index.php?id=${idEnEdicion}`, 'PUT', datos);
         if (!r.ok) {
             $('#msgRecurso').textContent = mensajeDeError(r);
             return;
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             dibujarFormulario();
             cfg.campos.forEach((c) => { $('#rec_' + c.id).value = fila[c.id]; });
         } else if (confirm(`¿Eliminar el ${cfg.etiqueta} #${id}?`)) {
-            const r = await llamar(`${API}/${recurso}/${id}`, 'DELETE');
+            const r = await llamar(`${API}/${recurso}/index.php?id=${id}`, 'DELETE');
             if (!r.ok) alert(mensajeDeError(r));
             await cargar();
         }

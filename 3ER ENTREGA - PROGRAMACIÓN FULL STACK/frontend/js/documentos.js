@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const cargarCategorias = async () => {
         try {
-            const res = await fetch(`${API}/categorias`, { method: 'GET' });
+            const res = await fetch(`${API}/categorias/index.php`, { method: 'GET' });
             const data = await res.json();
             if (res.ok && data.status === 'ok') {
                 categoriasList = data.datos || [];
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            const url = id ? `${API}/categorias/${id}` : `${API}/categorias`;
+            const url = id ? `${API}/categorias/index.php?id=${id}` : `${API}/categorias/index.php`;
             const metodo = id ? 'PUT' : 'POST';
 
             try {
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!confirm(`¿Confirma la eliminación de la categoría "${cat ? cat.nombre : '#' + id}"?`)) return;
 
             try {
-                const res = await fetch(`${API}/categorias/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${API}/categorias/index.php?id=${id}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (!res.ok) {
                     throw new Error(data.mensaje || 'No se pudo eliminar la categoría.');
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const obtenerDocumentos = async () => {
         try {
-            const res = await fetch(`${API}/documentos`, { method: 'GET' });
+            const res = await fetch(`${API}/documentos/index.php`, { method: 'GET' });
             const data = await res.json();
 
             if (res.ok && data.status === 'ok') {
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnGuardarDocumento.textContent = 'Guardando...';
 
         try {
-            const res = await fetch(`${API}/documentos`, {
+            const res = await fetch(`${API}/documentos/index.php`, {
                 method: 'POST',
                 body: formData
             });
@@ -387,12 +387,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (hayNuevoArchivo) {
                 const formData = new FormData(formEditarDocumento);
                 formData.append('_method', 'PUT');
-                res = await fetch(`${API}/documentos/${id}`, {
+                res = await fetch(`${API}/documentos/index.php?id=${id}`, {
                     method: 'POST',
                     body: formData
                 });
             } else {
-                res = await fetch(`${API}/documentos/${id}`, {
+                res = await fetch(`${API}/documentos/index.php?id=${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!confirm(`¿Confirma la eliminación del documento con ID #${id}?`)) return;
 
             try {
-                const res = await fetch(`${API}/documentos/${id}`, {
+                const res = await fetch(`${API}/documentos/index.php?id=${id}`, {
                     method: 'DELETE'
                 });
                 const data = await res.json();
@@ -536,10 +536,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cargarResultadosEncuestas = async () => {
         contenedorResultadosEncuestas.innerHTML = '<p class="text-center">Consultando resultados...</p>';
         const idCat = parseInt(selectFiltroEncuestaCategoria.value, 10);
-        const qs = idCat > 0 ? `?id_categoria=${idCat}` : '';
+        const qs = idCat > 0 ? `&id_categoria=${idCat}` : '';
 
         try {
-            const res = await fetch(`${API}/encuestas/resultados${qs}`, { method: 'GET' });
+            const res = await fetch(`${API}/encuestas/index.php?resultados=1${qs}`, { method: 'GET' });
             const data = await res.json();
 
             if (!res.ok || data.status !== 'ok') {
@@ -632,7 +632,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const url = idEnc ? `${API}/encuestas/${idEnc}` : `${API}/encuestas?recurso=encuesta`;
+            const url = idEnc ? `${API}/encuestas/index.php?id=${idEnc}` : `${API}/encuestas/index.php?recurso=encuesta`;
             const metodo = idEnc ? 'PUT' : 'POST';
             const res = await fetch(url, {
                 method: metodo,
@@ -678,8 +678,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const url = idPreg
-                ? `${API}/encuestas/${idPreg}?recurso=pregunta`
-                : `${API}/encuestas?recurso=pregunta`;
+                ? `${API}/encuestas/index.php?id=${idPreg}&recurso=pregunta`
+                : `${API}/encuestas/index.php?recurso=pregunta`;
             const metodo = idPreg ? 'PUT' : 'POST';
             const res = await fetch(url, {
                 method: metodo,
@@ -748,7 +748,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const idPreg = parseInt(btnDelPreg.dataset.id, 10);
             if (!confirm(`¿Confirma la eliminación de la pregunta #${idPreg}?`)) return;
             try {
-                const res = await fetch(`${API}/encuestas/${idPreg}?recurso=pregunta`, { method: 'DELETE' });
+                const res = await fetch(`${API}/encuestas/index.php?id=${idPreg}&recurso=pregunta`, { method: 'DELETE' });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.mensaje || 'No se pudo eliminar la pregunta.');
                 mostrarAlerta(data.mensaje, 'exito');
@@ -764,7 +764,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const idEnc = parseInt(btnDelEnc.dataset.encuesta, 10);
             if (!confirm(`¿Confirma la eliminación completa de la encuesta #${idEnc} y sus preguntas?`)) return;
             try {
-                const res = await fetch(`${API}/encuestas/${idEnc}`, { method: 'DELETE' });
+                const res = await fetch(`${API}/encuestas/index.php?id=${idEnc}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.mensaje || 'No se pudo eliminar la encuesta.');
                 mostrarAlerta(data.mensaje, 'exito');

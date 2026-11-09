@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cargar listado de usuarios de la API
     const cargarUsuarios = async () => {
         try {
-            const res = await fetch('../../api/usuarios');
+            const res = await fetch('../../api/usuarios/index.php');
             const data = await res.json();
 
             if (!res.ok) {
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGuardarUsuario.textContent = 'Guardando...';
 
         try {
-            const res = await fetch('../../api/usuarios', {
+            const res = await fetch('../../api/usuarios/index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (confirm(`¿Está seguro que desea eliminar definitivamente al funcionario "${nombre}"?\nEsta acción no se puede deshacer.`)) {
                 try {
-                    const res = await fetch(`../../api/usuarios/${id}`, {
+                    const res = await fetch(`../../api/usuarios/index.php?id=${id}`, {
                         method: 'DELETE'
                     });
 
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnActualizarUsuario.textContent = 'Actualizando...';
 
         try {
-            const res = await fetch(`../../api/usuarios/${id_usuario}`, {
+            const res = await fetch(`../../api/usuarios/index.php?id=${id_usuario}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

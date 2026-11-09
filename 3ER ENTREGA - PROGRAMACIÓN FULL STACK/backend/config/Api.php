@@ -66,10 +66,17 @@ class Api {
         }
     }
 
-    // Devuelve el id numérico de la URL (/api/recurso/{id}) o null si no vino.
+    // Devuelve el id numérico de la URL (/api/recurso/{id} o ?id={id}) o null si no vino.
     public static function idDeLaUrl(): ?int {
         $id = $_GET['id'] ?? '';
-        return (is_string($id) && ctype_digit($id)) ? (int)$id : null;
+        if (is_string($id) && ctype_digit($id)) {
+            return (int)$id;
+        }
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
+        if (preg_match('#/([0-9]+)(?:/(?:estado|resultados))?/?$#', $uri, $m)) {
+            return (int)$m[1];
+        }
+        return null;
     }
 
     /**
