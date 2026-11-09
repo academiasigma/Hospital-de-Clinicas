@@ -182,7 +182,8 @@ INSERT INTO usuario (email, nombre, contrasenia, rol, estado) VALUES
 ('superadmin@hc.edu.uy', 'SuperAdmin IT', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo'),
 ('gestor@hc.edu.uy', 'Gestor Integral', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'GESTOR_INTEGRAL', 'Activo'),
 ('director@hc.edu.uy', 'Director General', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'DIRECTOR_GENERAL', 'Activo'),
-('division@hc.edu.uy', 'Usuario Division', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'USUARIO_DIVISION', 'Activo');
+('division@hc.edu.uy', 'Usuario Division', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'USUARIO_DIVISION', 'Activo'),
+('academiasigma@hc.edu.uy', 'Academia Sigma', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'SUPERADMIN_IT', 'Activo');
 
 -- Insert de categorías médicas
 INSERT INTO categoria (nombre) VALUES 

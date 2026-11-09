@@ -1,0 +1,59 @@
+﻿================================================================================
+S.I.G.S.M. - SISTEMA INFORMÁTICO DE GESTIÓN DE SERVICIOS MÉDICOS
+Hospital de Clínicas "Dr. Manuel Quintela"
+Empresa Desarrolladora: Academia Sigma (3° MN - I.S.B.O.)
+================================================================================
+
+1. USUARIO INSTITUCIONAL DE LA EMPRESA (REQUISITO DE ENTREGA)
+--------------------------------------------------------------------------------
+- Correo electrónico : academiasigma@hc.edu.uy
+- Nombre             : Academia Sigma
+- Rol en el sistema  : SUPERADMIN_IT
+- Contraseña         : password
+
+2. CUENTAS DE PRUEBA POR ROL DE SISTEMA (APLICACIÓN WEB)
+--------------------------------------------------------------------------------
+Todas las cuentas de prueba tienen estado 'Activo' y su contraseña es: password
+(Almacenada en la base de datos mediante hash criptográfico BCRYPT).
+
+A) Superadministrador TI (Control total y ABM de Usuarios):
+   - Correo     : superadmin@hc.edu.uy
+   - Contraseña : password
+   - Rol        : SUPERADMIN_IT
+
+B) Gestor Integral / Coordinación de Transporte y Documentación:
+   - Correo     : gestor@hc.edu.uy
+   - Contraseña : password
+   - Rol        : GESTOR_INTEGRAL
+
+C) Director General (Auditoría y visualización):
+   - Correo     : director@hc.edu.uy
+   - Contraseña : password
+   - Rol        : DIRECTOR_GENERAL
+
+D) Usuario de División Médica (Solicitud de traslados y carga de guías PDF):
+   - Correo     : division@hc.edu.uy
+   - Contraseña : password
+   - Rol        : USUARIO_DIVISION
+
+3. PORTAL PÚBLICO DE PACIENTES / INVITADOS (SIN LOGIN)
+--------------------------------------------------------------------------------
+- Acceso directo desde el botón "Ingresar como Paciente / Invitado" en el Login:
+  /frontend/html/portal-invitados.html
+- Permite visualizar y descargar documentos clínicos PDF y responder de forma
+  anónima las encuestas de satisfacción activas por categoría.
+
+4. CREDENCIALES DE BASE DE DATOS MARIADB (DCL - ESQUEMA: sigsm_hospital)
+--------------------------------------------------------------------------------
+- Usuario de Aplicación (Solo permisos DML: SELECT, INSERT, UPDATE, DELETE):
+  * Usuario    : sigsm_app
+  * Contraseña : Hc1234_db
+
+- Usuario Administrador de BD (Control total: ALL PRIVILEGES):
+  * Usuario    : sigsm_admin
+  * Contraseña : Hc1234_admin
+
+- Usuario Root del Contenedor MariaDB:
+  * Usuario    : root
+  * Contraseña : root
+================================================================================
