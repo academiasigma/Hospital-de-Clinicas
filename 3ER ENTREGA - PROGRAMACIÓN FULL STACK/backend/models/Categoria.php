@@ -2,10 +2,7 @@
 
 require_once __DIR__ . '/Recurso.php';
 
-/**
- * Categoría institucional de documentos clínicos y encuestas de satisfacción.
- * Hereda el CRUD preparado de Recurso y mantiene listar() para compatibilidad con el portal.
- */
+// modelo para las categorias de documentos y encuestas
 class Categoria extends Recurso {
     protected string $tabla = 'categoria';
     protected string $clavePrimaria = 'id_categoria';
@@ -19,7 +16,7 @@ class Categoria extends Recurso {
         return $errores;
     }
 
-    // Retorna el listado completo de las categorías ordenadas alfabéticamente.
+    // devuelve todas las categorias ordenadas por nombre
     public function listar(array $filtros = []): array {
         $sql = "SELECT id_categoria, nombre FROM {$this->tabla} ORDER BY nombre ASC";
         $stmt = $this->conexion->prepare($sql);

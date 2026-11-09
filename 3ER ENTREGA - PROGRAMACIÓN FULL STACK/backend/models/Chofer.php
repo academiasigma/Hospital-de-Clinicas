@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/Recurso.php';
 
-// Chofer del hospital: puede manejar toda la flota (ambulancias y autos).
+// modelo de chofer
 class Chofer extends Recurso {
     protected string $tabla = 'chofer';
     protected string $clavePrimaria = 'id_chofer';

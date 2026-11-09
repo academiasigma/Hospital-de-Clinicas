@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/Recurso.php';
 
-// Enfermero que viaja con el chofer: es el único responsable del paciente durante el traslado.
+// modelo de enfermero
 class Enfermero extends Recurso {
     protected string $tabla = 'enfermero';
     protected string $clavePrimaria = 'id_enfermero';

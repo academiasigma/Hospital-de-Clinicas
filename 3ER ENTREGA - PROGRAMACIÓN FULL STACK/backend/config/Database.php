@@ -1,8 +1,7 @@
 <?php
 
 class Database {
-    // Credenciales por defecto apuntando al servidor MariaDB de CentOS Stream 9 (192.168.1.234:3306).
-    // Se pueden sobreescribir con variables de entorno (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS).
+    // datos de conexion a la base de datos
     private string $host;
     private string $port;
     private string $db_name;
@@ -18,8 +17,7 @@ class Database {
         $this->password = getenv('DB_PASS') ?: 'Hc1234_db';
     }
 
-    // Obtiene y retorna la instancia activa de la conexión PDO.
-    // Intenta primero el host principal (CentOS 192.168.1.234) y tiene respaldo automático a Docker local (sigsm_mariadb) y XAMPP (127.0.0.1).
+    // conecta con PDO probando primero el servidor y sino local
     public function conectar(): ?PDO {
         $this->conexion = null;
         $hostsCandidatos = array_values(array_unique([$this->host, 'sigsm_mariadb', '127.0.0.1']));
@@ -42,7 +40,7 @@ class Database {
             }
         }
 
-        // No se expone $ultimoError->getMessage() al cliente (puede filtrar host/usuario); se registra en el log.
+        // guardamos el error en el log para no mostrar datos de conexion
         if ($ultimoError !== null) {
             error_log('Error de conexión a la base de datos: ' . $ultimoError->getMessage());
         }

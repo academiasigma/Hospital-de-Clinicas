@@ -2,10 +2,7 @@
 
 require_once __DIR__ . '/Recurso.php';
 
-/**
- * Paciente a trasladar. El ingreso de datos es manual (mínimo exigido por el profesor);
- * la consulta a una API externa por C.I. queda como mejora opcional.
- */
+// modelo de paciente para los traslados
 class Paciente extends Recurso {
     protected string $tabla = 'paciente';
     protected string $clavePrimaria = 'id_paciente';
@@ -33,7 +30,7 @@ class Paciente extends Recurso {
         return $errores;
     }
 
-    // Filtra por ?documento= (búsqueda exacta por C.I., usada en el formulario de alta de traslado).
+    // busca por cedula si se pasa el parametro documento
     public function listar(array $filtros = []): array {
         if (!empty($filtros['documento'])) {
             $sql = "SELECT * FROM paciente WHERE documento = :documento";
@@ -54,16 +51,13 @@ class Paciente extends Recurso {
         return $fila ?: null;
     }
 
-    /**
-     * Alta manual con "upsert": si ya existe un paciente con ese documento actualiza sus datos
-     * y reutiliza el registro; si no, lo crea. Devuelve el id del paciente.
-     */
+    // si el paciente ya esta registrado con esa cedula actualiza sus datos, sino lo crea
     public function crear(array $datos): ?int {
         $datos['documento'] = trim((string)($datos['documento'] ?? ''));
         foreach (['requiere_oxigeno', 'requiere_camilla', 'requiere_aislamiento'] as $campo) {
             $datos[$campo] = empty($datos[$campo]) ? 0 : 1;
         }
-        // Por defecto el paciente se maneja por sus medios (igual que el DEFAULT 1 de la tabla).
+        // por defecto el paciente se maneja por sus medios
         $datos['se_maneja_por_sus_medios'] = (!isset($datos['se_maneja_por_sus_medios']) || $datos['se_maneja_por_sus_medios']) ? 1 : 0;
 
         $existente = $this->obtenerPorDocumento($datos['documento']);

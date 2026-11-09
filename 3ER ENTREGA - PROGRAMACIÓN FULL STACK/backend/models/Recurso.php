@@ -2,20 +2,14 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-/**
- * Clase base (capa de negocio + acceso a datos) para las entidades simples del módulo
- * Ambulancias: Chofer, Enfermero, Vehiculo y Paciente.
- * Las subclases solo declaran la tabla, la clave primaria, los campos y sus reglas de validación.
- * Todas las consultas son preparadas (PDO) para prevenir inyección SQL.
- */
+// clase base para chofer, enfermero, vehiculo y paciente
 abstract class Recurso {
     protected ?PDO $conexion;
     protected string $tabla;
     protected string $clavePrimaria;
-    /** @var string[] Columnas editables (lista blanca: solo estas llegan a la base). */
     protected array $campos = [];
 
-    /** Último error ocurrido: '', 'duplicado', 'referenciado' o 'error'. */
+    // guarda si hubo error al insertar o borrar
     public string $ultimoError = '';
 
     public function __construct() {
@@ -23,10 +17,10 @@ abstract class Recurso {
         $this->conexion = $db->conectar();
     }
 
-    // Devuelve la lista de mensajes de error de validación (vacía si los datos son correctos).
+    // cada clase valida sus propios datos
     abstract public function validar(array $datos): array;
 
-    // Retorna todos los registros. Las subclases pueden usar $filtros (ej: ?documento=).
+    // devuelve todos los registros de la tabla
     public function listar(array $filtros = []): array {
         $sql = "SELECT * FROM {$this->tabla} ORDER BY {$this->clavePrimaria} ASC";
         $stmt = $this->conexion->prepare($sql);
@@ -43,7 +37,7 @@ abstract class Recurso {
         return $fila ?: null;
     }
 
-    // Inserta un registro y devuelve su id (null si falla; ver $ultimoError).
+    // inserta un nuevo registro y devuelve el id
     public function crear(array $datos): ?int {
         $this->ultimoError = '';
         $columnas = implode(', ', $this->campos);
@@ -77,7 +71,7 @@ abstract class Recurso {
         }
     }
 
-    // Elimina un registro. Si tiene traslados asociados la FK (RESTRICT) lo impide.
+    // elimina un registro por su id
     public function eliminar(int $id): bool {
         $this->ultimoError = '';
         $sql = "DELETE FROM {$this->tabla} WHERE {$this->clavePrimaria} = :id";
@@ -93,7 +87,7 @@ abstract class Recurso {
         }
     }
 
-    // Deja solo los campos permitidos, con trim y '' convertido a null.
+    // limpia los espacios de los campos
     protected function limpiar(array $datos): array {
         $limpio = [];
         foreach ($this->campos as $campo) {
@@ -107,7 +101,7 @@ abstract class Recurso {
         return $limpio;
     }
 
-    // Clasifica el error de PDO: 1062 = clave única duplicada, 1451 = referenciado por una FK.
+    // revisa el codigo de error de mysql para ver si esta repetido o en uso
     protected function registrarError(PDOException $e): void {
         $codigoMotor = $e->errorInfo[1] ?? 0;
         if ($codigoMotor === 1062) {
@@ -120,7 +114,7 @@ abstract class Recurso {
         }
     }
 
-    // Validadores reutilizables por las subclases.
+    // funciones para validar textos y telefonos
     protected function textoValido(?string $valor, int $max): bool {
         return is_string($valor) && trim($valor) !== '' && mb_strlen(trim($valor)) <= $max;
     }

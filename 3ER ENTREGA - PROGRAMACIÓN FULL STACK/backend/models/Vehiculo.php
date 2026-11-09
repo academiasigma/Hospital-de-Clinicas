@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/Recurso.php';
 
-// Vehículo de la flota del hospital (Ambulancia o Auto).
+// modelo de vehiculo
 class Vehiculo extends Recurso {
     protected string $tabla = 'vehiculo';
     protected string $clavePrimaria = 'id_vehiculo';

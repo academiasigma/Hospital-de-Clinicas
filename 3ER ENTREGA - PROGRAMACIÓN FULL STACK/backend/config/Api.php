@@ -4,17 +4,10 @@ require_once __DIR__ . '/Auth.php';
 
 date_default_timezone_set('America/Montevideo');
 
-/**
- * Utilidades comunes de la capa de presentación (endpoints REST).
- * Centraliza: validación del método HTTP, control de sesión/rol, lectura del cuerpo JSON
- * y el formato uniforme de las respuestas.
- */
+// funciones generales para usar en las apis
 class Api {
 
-    /**
-     * Prepara la respuesta JSON, valida que el método HTTP sea uno de los permitidos
-     * (si no, responde 405) y arranca la sesión. Devuelve el método de la petición.
-     */
+    // inicia la sesion y verifica que el metodo http sea valido
     public static function iniciar(array $metodosPermitidos): string {
         header('Content-Type: application/json; charset=utf-8');
         header('Allow: ' . implode(', ', $metodosPermitidos));
@@ -27,14 +20,14 @@ class Api {
         return $metodo;
     }
 
-    // Envía una respuesta JSON y termina la ejecución.
+    // devuelve la respuesta en json
     public static function responder(int $codigo, array $datos): void {
         http_response_code($codigo);
         echo json_encode($datos, JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    // Respuesta de error con formato uniforme. $errores es opcional (lista de mensajes de validación).
+    // devuelve un mensaje de error con su codigo
     public static function error(int $codigo, string $mensaje, array $errores = []): void {
         $respuesta = ['status' => 'error', 'mensaje' => $mensaje];
         if (!empty($errores)) {
@@ -43,7 +36,7 @@ class Api {
         self::responder($codigo, $respuesta);
     }
 
-    // Lee el cuerpo JSON de la petición (POST/PUT). Si no es JSON válido responde 400.
+    // lee los datos json que llegan en el body
     public static function entrada(): array {
         $crudo = file_get_contents('php://input');
         if ($crudo === '' || $crudo === false) {
@@ -56,7 +49,7 @@ class Api {
         return $datos;
     }
 
-    // Exige sesión activa (401) y que el rol esté entre los permitidos (403).
+    // revisa que el usuario haya iniciado sesion y tenga el rol necesario
     public static function exigirRol(array $rolesPermitidos): void {
         if (!Auth::verificarAutenticacion()) {
             self::error(401, 'No autorizado. Debe iniciar sesión.');
@@ -66,7 +59,7 @@ class Api {
         }
     }
 
-    // Devuelve el id numérico de la URL (/api/recurso/{id} o ?id={id}) o null si no vino.
+    // saca el id que viene por parametro o en la url
     public static function idDeLaUrl(): ?int {
         $id = $_GET['id'] ?? '';
         if (is_string($id) && ctype_digit($id)) {
@@ -79,10 +72,7 @@ class Api {
         return null;
     }
 
-    /**
-     * Controlador REST genérico para los recursos simples (choferes, enfermeros, vehículos, pacientes).
-     * GET lista/obtiene, POST crea, PUT edita y DELETE elimina. La escritura se limita a $rolesEscritura.
-     */
+    // abm general para choferes, enfermeros, vehiculos y pacientes
     public static function crudRecurso(Recurso $modelo, array $rolesLectura, array $rolesEscritura, string $etiqueta): void {
         $metodo = self::iniciar(['GET', 'POST', 'PUT', 'DELETE']);
         $id = self::idDeLaUrl();
@@ -134,14 +124,14 @@ class Api {
             self::responder(200, ['status' => 'ok', 'mensaje' => "$etiqueta actualizado."]);
         }
 
-        // DELETE
+        // eliminar registro
         if (!$modelo->eliminar($id)) {
             self::errorDeModelo($modelo, $etiqueta);
         }
         self::responder(200, ['status' => 'ok', 'mensaje' => "$etiqueta eliminado."]);
     }
 
-    // Traduce el último error del modelo (duplicado / referenciado / genérico) a un código HTTP.
+    // muestra el error segun lo que fallo en la base
     private static function errorDeModelo(Recurso $modelo, string $etiqueta): void {
         switch ($modelo->ultimoError) {
             case 'duplicado':
